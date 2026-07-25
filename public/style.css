@@ -27,8 +27,8 @@ ul{list-style:none}
   border-bottom:1px solid transparent;width:100%;
 }
 .nav.scrolled{border-bottom-color:var(--border)}
-.logo{font:700 1.15rem var(--mono);color:var(--heading);letter-spacing:-.5px}
-.logo .dot{color:var(--accent)}
+.logo{font:700 1.15rem var(--mono);color:var(--heading);letter-spacing:-.5px;display:flex;align-items:center;gap:6px}
+.logo .logo-icon{color:var(--accent);font-size:1rem}
 .nav-links{display:flex;gap:28px}
 .nav-links a{
   color:var(--muted);font-size:.85rem;font-weight:500;
