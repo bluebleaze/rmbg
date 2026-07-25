@@ -1,6 +1,10 @@
-# rmbg — Remove Background
+<p align="center">
+  <img src="public/favicon.svg" width="64" height="64" alt="rmbg logo">
+</p>
 
-AI background removal website dengan terminal-styled UI.
+<h1 align="center">⟩_✂ rmbg</h1>
+
+<p align="center">AI background removal website dengan terminal-styled UI.</p>
 
 ## Fitur
 
