@@ -74,6 +74,9 @@
     <span class="spinner">⠋</span>
     <span id="progressText">initializing...</span>
   </div>
+  <div class="progress-line" id="fallbackInfo" style="display:none; color:var(--accent-dim); margin-top:4px;">
+    <span>⚠ api offline, using local fallback mode</span>
+  </div>
   <div class="progress-bar-wrap">
     <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
     <span class="progress-pct" id="progressPct">0%</span>
@@ -100,6 +103,6 @@
   <span>rmbg</span> • powered by pixa ai • ruby@removebg
 </footer>
 
-<script src="public/script.js"></script>
+<script type="module" src="public/script.js"></script>
 </body>
 </html>

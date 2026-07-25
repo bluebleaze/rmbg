@@ -1,3 +1,9 @@
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
+
+// Disable local models since we are running in browser
+env.allowLocalModels = false;
+env.backends.onnx.wasm.numThreads = 1;
+
 (function(){
   'use strict';
 
@@ -20,6 +26,7 @@
   var progressFill=document.getElementById('progressFill');
   var progressText=document.getElementById('progressText');
   var progressPct=document.getElementById('progressPct');
+  var fallbackInfo=document.getElementById('fallbackInfo');
   var resultsArea=document.getElementById('resultsArea');
   var resultsGrid=document.getElementById('resultsGrid');
   var globalActions=document.getElementById('globalActions');
@@ -32,6 +39,8 @@
   /* ── State ── */
   var jobs=[];       // {file, origUrl, resultBlob, resultUrl, status, duration, error}
   var processing=false;
+  var useFallback=false;
+  var fallbackPipeline=null;
 
   /* ── Nav scroll ── */
   window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>20)},{passive:true});
@@ -101,7 +110,7 @@
   }
 
   /* ── Process queue ── */
-  function processQueue(){
+  async function processQueue(){
     var next=-1;
     for(var i=0;i<jobs.length;i++){if(jobs[i].status==='pending'){next=i;break}}
     if(next===-1){finishAll();return}
@@ -119,31 +128,116 @@
     var globalPct=Math.round((done/total)*100);
     setProgress(globalPct,'processing '+(done+1)+'/'+total+': '+job.file.name);
 
-    var t0=Date.now();
-    var form=new FormData();
-    form.append('image',job.file,job.file.name);
-    form.append('format','png');
-    form.append('model','v1');
+    if (useFallback) fallbackInfo.style.display = 'block';
 
-    fetch('/api/removebg',{
-      method:'POST',
-      body:form
-    }).then(function(res){
-      if(!res.ok)throw new Error('server '+res.status);
-      return res.blob();
-    }).then(function(blob){
-      if(blob.size<100)throw new Error('empty response');
-      job.resultBlob=blob;
-      job.resultUrl=URL.createObjectURL(blob);
-      job.status='done';
-      job.duration=((Date.now()-t0)/1000).toFixed(1);
-    }).catch(function(e){
-      job.status='error';
-      job.error=e.message;
-    }).finally(function(){
+    var t0=Date.now();
+
+    try {
+      if (!useFallback) {
+        var form=new FormData();
+        form.append('image',job.file,job.file.name);
+        form.append('format','png');
+        form.append('model','v1');
+
+        var proxyUrl = window.location.hostname.includes('vercel.app') 
+          ? '/api/removebg.js' 
+          : '/api/removebg';
+
+        const res = await fetch(proxyUrl, { method:'POST', body:form });
+        if(!res.ok) throw new Error('server '+res.status);
+        
+        const blob = await res.blob();
+        if(blob.size<100) throw new Error('empty response');
+        
+        job.resultBlob=blob;
+        job.resultUrl=URL.createObjectURL(blob);
+        job.status='done';
+        job.duration=((Date.now()-t0)/1000).toFixed(1);
+      } else {
+        await runLocalFallback(job, t0);
+      }
+    } catch(e) {
+      if (!useFallback) {
+        console.log('API failed, switching to fallback mode...', e);
+        useFallback = true;
+        fallbackInfo.style.display = 'block';
+        try {
+          await runLocalFallback(job, t0);
+        } catch(fallbackErr) {
+          job.status='error';
+          job.error='fallback failed: ' + fallbackErr.message;
+        }
+      } else {
+        job.status='error';
+        job.error=e.message;
+      }
+    } finally {
       renderQueue();
       processQueue();
+    }
+  }
+
+  async function runLocalFallback(job, t0) {
+    setProgress(10, 'loading ai model (once)...');
+    
+    if (!fallbackPipeline) {
+      fallbackPipeline = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+        revision: 'main',
+        progress_callback: data => {
+          if (data.status === 'progress') {
+            setProgress(10 + Math.round(data.progress * 0.4), 'downloading model: ' + Math.round(data.progress) + '%');
+          }
+        }
+      });
+    }
+
+    setProgress(50, 'analyzing image locally...');
+    
+    // Read file as url for pipeline
+    const url = await new Promise(r => {
+      const reader = new FileReader();
+      reader.onload = () => r(reader.result);
+      reader.readAsDataURL(job.file);
     });
+
+    const result = await fallbackPipeline(url);
+    setProgress(90, 'generating transparent png...');
+
+    // Convert output to blob
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    await new Promise(r => {
+      img.onload = r;
+      img.src = url;
+    });
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+
+    const mask = await createImageBitmap(new ImageData(
+      new Uint8ClampedArray(result[0].mask.data),
+      result[0].mask.width,
+      result[0].mask.height
+    ));
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(mask, 0, 0, canvas.width, canvas.height);
+
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(tempCanvas, 0, 0);
+
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    
+    job.resultBlob=blob;
+    job.resultUrl=URL.createObjectURL(blob);
+    job.status='done';
+    job.duration=((Date.now()-t0)/1000).toFixed(1);
   }
 
   /* ── Finish all ── */
@@ -209,7 +303,7 @@
 
   resetBtn.addEventListener('click',function(){
     jobs=[];processing=false;stopSpin();
-    queueEl.style.display='none';progressWrap.style.display='none';
+    queueEl.style.display='none';progressWrap.style.display='none';fallbackInfo.style.display='none';
     resultsArea.style.display='none';statsSummary.style.display='none';
     globalActions.style.display='none';errorEl.style.display='none';
     dropZone.style.display='block';progressFill.style.width='0%';
