@@ -1,6 +1,7 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/removebg", "destination": "/api/removebg" }
+    { "source": "/api/removebg", "destination": "/api/removebg" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
