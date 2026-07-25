@@ -195,7 +195,9 @@ env.backends.onnx.wasm.numThreads = 1;
     var t0=Date.now();
 
     try {
-      if (!useFallback) {
+      if (currentMode === 'rmbg' && useFallback) {
+        await runLocalFallback(job, t0);
+      } else {
         var form=new FormData();
         var proxyUrl = '';
         
@@ -219,12 +221,10 @@ env.backends.onnx.wasm.numThreads = 1;
         job.resultUrl=URL.createObjectURL(blob);
         job.status='done';
         job.duration=((Date.now()-t0)/1000).toFixed(1);
-      } else {
-        await runLocalFallback(job, t0);
       }
     } catch(e) {
-      if (!useFallback) {
-        console.log('API failed, switching to fallback mode...', e);
+      if (currentMode === 'rmbg' && !useFallback) {
+        console.log('RMBG API failed, switching to local fallback mode...', e);
         useFallback = true;
         fallbackInfo.style.display = 'block';
         try {
