@@ -19,7 +19,18 @@
 - **Responsive** mobile-friendly layout
 - **Terminal Aesthetic** (Monospace fonts, CLI prompt vibes)
 
-## Deploy to a Home Server
+## Deploy to Vercel (Serverless / Free)
+
+The easiest way to deploy without a home server.
+
+1. Push this repository to GitHub.
+2. Sign in to [Vercel](https://vercel.com) using your GitHub account.
+3. Import the repository.
+4. Vercel will automatically host the frontend and use the `/api/removebg.js` file as a serverless backend function.
+
+---
+
+## Deploy to a Home Server (Self-hosted)
 
 ### 1. Clone the repository
 
