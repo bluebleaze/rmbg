@@ -4,7 +4,7 @@
 
 <h1 align="center">⟩_⚙ ruby-tools</h1>
 
-<p align="center">AI image utility web app with a Linux terminal aesthetic.</p>
+<p align="center">AI Open Source Web image utility web app with a Linux terminal aesthetic.</p>
 
 <p align="center">
   <em>Originally built as a feature for the popular WhatsApp Baileys bot <b>Ruby</b>, now extracted into a standalone, multi-file web app.</em>
