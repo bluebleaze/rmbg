@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rmbg — Remove Background</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="public/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="#" class="logo">rmbg<span class="dot">.</span></a>
+  <button class="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links">
+    <li><a href="#" class="active">Remove BG</a></li>
+    <li><a href="#">About</a></li>
+    <li><a href="#">GitHub</a></li>
+  </ul>
+</nav>
+
+<div class="topbar">
+  <div class="dots"><span></span><span></span><span></span></div>
+  <div class="title"><b>rmbg</b> — ruby@removebg:~</div>
+</div>
+
+<div class="container">
+
+<div class="term-header">
+<div class="prompt"><span class="user">ruby</span><span class="at">@</span><span class="host">removebg</span> <span class="path">~</span> <span class="dollar">$</span> <span class="cmd">rmbg --help</span></div>
+<pre class="ascii-box">
+┌─────────────────────────────────────┐
+│                                     │
+│   ╭─────────────────────────────╮   │
+│   │  rmbg v2.0                  │   │
+│   │  AI background removal      │   │
+│   │                             │   │
+│   │  usage: upload images       │   │
+│   │  formats: jpg, png          │   │
+│   │  multi-file: supported      │   │
+│   │  output: transparent png    │   │
+│   ╰─────────────────────────────╯   │
+│                                     │
+└─────────────────────────────────────┘</pre>
+<div class="output">
+<span class="dim">$</span> <span class="flag">drop</span> files below or click to select (multiple)
+</div>
+</div>
+
+<div class="drop-zone" id="dropZone">
+  <div class="gz-icon">⟩_</div>
+  <div class="gz-label">drag images here or <span>browse</span></div>
+  <div class="gz-hint">jpg / png • max 10 MB each • multiple files supported</div>
+  <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple>
+</div>
+
+<div class="error-box" id="error"></div>
+
+<div class="queue" id="queue">
+  <div class="queue-header">
+    <span>── queue ──</span>
+    <span class="queue-count" id="queueCount">0 files</span>
+  </div>
+  <div class="queue-list" id="queueList"></div>
+</div>
+
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-line">
+    <span class="spinner">⠋</span>
+    <span id="progressText">initializing...</span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+    <span class="progress-pct" id="progressPct">0%</span>
+  </div>
+</div>
+
+<div class="stats-summary" id="statsSummary">
+  <span id="summaryText"></span>
+</div>
+
+<div class="results-area" id="resultsArea">
+  <div class="results-header">── results ──</div>
+  <div class="results-grid" id="resultsGrid"></div>
+</div>
+
+<div class="global-actions" id="globalActions">
+  <button class="term-btn primary" id="downloadAllBtn">⬇ download all</button>
+  <button class="term-btn" id="resetBtn">↻ reset</button>
+</div>
+
+</div>
+
+<footer>
+  <span>rmbg</span> • powered by pixa ai • ruby@removebg
+</footer>
+
+<script src="public/script.js"></script>
+</body>
+</html>
