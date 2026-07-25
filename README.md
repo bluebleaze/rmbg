@@ -13,7 +13,7 @@
 ## Tools Included
 
 - **--rmbg** (Background Removal): Remove image backgrounds using Pixa AI or local on-device fallback (Transformers.js).
-- **--hd** (Image Enhancer): Upscale and enhance image quality using Betabotz Remini API.
+- **--hd** (Image Enhancer): *[COMING SOON]* Upscale and enhance image quality. (Currently disabled due to upstream API instability).
 
 ## Features
 

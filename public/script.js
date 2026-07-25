@@ -76,6 +76,10 @@ env.backends.onnx.wasm.numThreads = 1;
 │   ╰───────────────╯     │
 │                         │
 └─────────────────────────┘`;
+        dropZone.style.pointerEvents = 'auto';
+        dropZone.style.opacity = '1';
+        document.querySelector('.gz-label').innerHTML = 'drag images here or <span>browse</span>';
+        document.querySelector('.gz-hint').style.display = 'block';
       } else if (currentMode === 'hd') {
         asciiBox.textContent = `
 ┌─────────────────────────┐
@@ -84,13 +88,17 @@ env.backends.onnx.wasm.numThreads = 1;
 │   │ hd-ify v1.0   │     │
 │   │ AI enhancer   │     │
 │   │               │     │
-│   │ usage: upload │     │
-│   │ format: image │     │
+│   │ STATUS:       │     │
+│   │ COMING SOON   │     │
+│   │ (API OFFLINE) │     │
 │   │               │     │
-│   │ out: .jpg     │     │
 │   ╰───────────────╯     │
 │                         │
 └─────────────────────────┘`;
+        dropZone.style.pointerEvents = 'none';
+        dropZone.style.opacity = '0.4';
+        document.querySelector('.gz-label').innerHTML = 'HD mode is currently <span style="color:var(--error)">coming soon</span>';
+        document.querySelector('.gz-hint').style.display = 'none';
       }
       
       // Reset state on mode switch

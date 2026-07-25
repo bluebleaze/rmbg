@@ -33,9 +33,23 @@ ul{list-style:none}
 .nav-links a{
   color:var(--muted);font-size:.85rem;font-weight:500;
   text-transform:uppercase;letter-spacing:.3px;
+  position:relative;
 }
-.nav-links a:hover{color:var(--text);text-decoration:none}
-.nav-links a.active{color:var(--accent)}
+.nav-links a.mode-switch {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.nav-links a.mode-switch:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.nav-links a.active{
+  color:var(--accent);
+  background: var(--surface);
+  border-color: var(--border);
+}
 
 .hamburger{
   display:none;flex-direction:column;gap:5px;cursor:pointer;
