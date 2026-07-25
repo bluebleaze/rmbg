@@ -67,7 +67,8 @@ ul{list-style:none}
 .container{max-width:var(--max-w);width:100%;margin:0 auto;padding:24px 24px;flex:1}
 
 /* ── Terminal header ── */
-.term-header{margin-bottom:32px}
+.term-header{margin-bottom:32px;display:flex;align-items:flex-start;gap:32px}
+.term-text{flex:1}
 .prompt{color:var(--accent)}
 .prompt .user{color:var(--accent)}
 .prompt .at{color:var(--muted)}
@@ -75,10 +76,17 @@ ul{list-style:none}
 .prompt .path{color:#af87d7}
 .prompt .dollar{color:var(--heading)}
 .cmd{color:var(--heading)}
-.output{color:var(--text);margin-top:4px;line-height:1.7}
+.output{color:var(--text);margin-top:16px;line-height:1.7}
 .output .flag{color:var(--accent)}
 .output .dim{color:var(--muted)}
-.ascii-box{color:var(--accent);margin:16px 0;line-height:1.4;font-size:13px}
+
+.ascii-box{
+  color:var(--accent);line-height:1.4;font-size:12px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 20px;
+  box-shadow:0 0 40px var(--accent-glow);
+  flex-shrink:0;margin:0;
+}
 
 /* ── Drop zone ── */
 .drop-zone{
@@ -203,7 +211,8 @@ footer span{color:var(--accent)}
 
 @media(max-width:600px){
   .container{padding:16px 12px}
-  .ascii-box{font-size:10px;overflow-x:auto}
+  .ascii-box{font-size:10px;width:100%;overflow-x:auto}
+  .term-header{flex-direction:column;gap:16px}
   .results-grid{grid-template-columns:1fr}
   .result-card .img-compare{grid-template-columns:1fr}
   .queue-item{grid-template-columns:32px 1fr auto}
