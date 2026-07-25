@@ -41,6 +41,68 @@ env.backends.onnx.wasm.numThreads = 1;
   var processing=false;
   var useFallback=false;
   var fallbackPipeline=null;
+  var currentMode='rmbg'; // 'rmbg' or 'hd'
+
+  /* ── Mode Switching ── */
+  var modeSwitches = document.querySelectorAll('.mode-switch');
+  var promptCmd = document.getElementById('promptCmd');
+  var asciiBox = document.getElementById('asciiBox');
+
+  modeSwitches.forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Update nav active state
+      modeSwitches.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      currentMode = this.getAttribute('data-mode');
+      
+      // Update UI texts
+      promptCmd.textContent = 'ruby-tools --' + currentMode;
+      
+      if (currentMode === 'rmbg') {
+        asciiBox.textContent = `
+┌─────────────────────────┐
+│                         │
+│   ╭───────────────╮     │
+│   │ rmbg v2.0     │     │
+│   │ AI removal    │     │
+│   │               │     │
+│   │ usage: upload │     │
+│   │ format: image │     │
+│   │               │     │
+│   │ out: .png     │     │
+│   ╰───────────────╯     │
+│                         │
+└─────────────────────────┘`;
+      } else if (currentMode === 'hd') {
+        asciiBox.textContent = `
+┌─────────────────────────┐
+│                         │
+│   ╭───────────────╮     │
+│   │ hd-ify v1.0   │     │
+│   │ AI enhancer   │     │
+│   │               │     │
+│   │ usage: upload │     │
+│   │ format: image │     │
+│   │               │     │
+│   │ out: .jpg     │     │
+│   ╰───────────────╯     │
+│                         │
+└─────────────────────────┘`;
+      }
+      
+      // Reset state on mode switch
+      resetBtn.click();
+      
+      // Close mobile menu if open
+      if (hamburger.classList.contains('active')) {
+        hamburger.classList.remove('active');
+        navLinks.classList.remove('open');
+      }
+    });
+  });
 
   /* ── Nav scroll ── */
   window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>20)},{passive:true});
@@ -135,13 +197,17 @@ env.backends.onnx.wasm.numThreads = 1;
     try {
       if (!useFallback) {
         var form=new FormData();
-        form.append('image',job.file,job.file.name);
-        form.append('format','png');
-        form.append('model','v1');
-
-        var proxyUrl = window.location.hostname.includes('vercel.app') 
-          ? '/api/removebg.js' 
-          : '/api/removebg';
+        var proxyUrl = '';
+        
+        if (currentMode === 'rmbg') {
+          form.append('image',job.file,job.file.name);
+          form.append('format','png');
+          form.append('model','v1');
+          proxyUrl = window.location.hostname.includes('vercel.app') ? '/api/removebg.js' : '/api/removebg';
+        } else if (currentMode === 'hd') {
+          form.append('image',job.file,job.file.name);
+          proxyUrl = window.location.hostname.includes('vercel.app') ? '/api/enhance.js' : '/api/enhance';
+        }
 
         const res = await fetch(proxyUrl, { method:'POST', body:form });
         if(!res.ok) throw new Error('server '+res.status);
@@ -276,7 +342,8 @@ env.backends.onnx.wasm.numThreads = 1;
     for(var d=0;d<dlBtns.length;d++){
       dlBtns[d].addEventListener('click',function(){
         var idx=parseInt(this.getAttribute('data-idx'));
-        downloadBlob(jobs[idx].resultBlob,jobs[idx].file.name.replace(/\.[^.]+$/,'')+'-nobg.png');
+        var ext = currentMode === 'hd' ? '-hd.jpg' : '-nobg.png';
+        downloadBlob(jobs[idx].resultBlob,jobs[idx].file.name.replace(/\.[^.]+$/,'')+ext);
       });
     }
 
@@ -384,7 +451,8 @@ env.backends.onnx.wasm.numThreads = 1;
   downloadAllBtn.addEventListener('click',function(){
     for(var i=0;i<jobs.length;i++){
       if(jobs[i].status==='done'){
-        downloadBlob(jobs[i].resultBlob,jobs[i].file.name.replace(/\.[^.]+$/,'')+'-nobg.png');
+        var ext = currentMode === 'hd' ? '-hd.jpg' : '-nobg.png';
+        downloadBlob(jobs[i].resultBlob,jobs[i].file.name.replace(/\.[^.]+$/,'')+ext);
       }
     }
   });

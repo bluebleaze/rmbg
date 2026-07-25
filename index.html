@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>rmbg — Remove Background</title>
+<title>Ruby Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -13,12 +13,13 @@
 <body>
 
 <nav class="nav">
-  <a href="#" class="logo"><span class="logo-icon">⟩_✂</span></a>
+  <a href="#" class="logo"><span class="logo-icon">⟩_⚙</span> ruby-tools</a>
   <button class="hamburger" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
   <ul class="nav-links">
-    <li><a href="#" class="active">Remove BG</a></li>
+    <li><a href="#" class="mode-switch active" data-mode="rmbg">--rmbg</a></li>
+    <li><a href="#" class="mode-switch" data-mode="hd">--hd</a></li>
     <li><a href="https://bluebleaze.github.io/">About</a></li>
     <li><a href="https://github.com/bluebleaze/rmbg">GitHub</a></li>
   </ul>
@@ -26,21 +27,21 @@
 
 <div class="topbar">
   <div class="dots"><span></span><span></span><span></span></div>
-  <div class="title"><b>rmbg</b> — ruby@removebg:~</div>
+  <div class="title"><b>ruby-tools</b> — ruby@home:~</div>
 </div>
 
 <div class="container">
 
 <div class="term-header">
   <div class="term-text">
-    <div class="prompt"><span class="user">ruby</span><span class="at">@</span><span class="host">removebg</span> <span class="path">~</span> <span class="dollar">$</span> <span class="cmd">rmbg --help</span></div>
-    <div class="output">
+    <div class="prompt"><span class="user">ruby</span><span class="at">@</span><span class="host">home</span> <span class="path">~</span> <span class="dollar">$</span> <span class="cmd" id="promptCmd">ruby-tools --rmbg</span></div>
+    <div class="output" id="termOutput">
       <span class="dim">$</span> <span class="flag">drop</span> files below or click to select (multiple)<br>
       <span class="dim">$</span> <span class="flag">batch</span> processing supported natively<br>
       <span class="dim">$</span> <span class="flag">local fallback</span> enabled for offline resilience
     </div>
   </div>
-<pre class="ascii-box">
+<pre class="ascii-box" id="asciiBox">
 ┌─────────────────────────┐
 │                         │
 │   ╭───────────────╮     │
@@ -104,7 +105,7 @@
 </div>
 
 <footer>
-  <span>rmbg</span> • powered by pixa ai • ruby@removebg
+  <span>ruby-tools</span> • AI utilities • ruby@home
 </footer>
 
 <script type="module" src="public/script.js"></script>

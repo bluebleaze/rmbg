@@ -11,13 +11,8 @@ const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } })
 
 const PORT = process.env.PORT || 3456
 
-// ponytail: no rate limiting yet, add when abuse happens
-
 // serve frontend
 app.use(express.static(join(__dirname, '.')))
-
-// health check
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 
 // proxy remove bg
 app.post('/api/removebg', upload.single('image'), async (req, res) => {
@@ -53,7 +48,6 @@ app.post('/api/removebg', upload.single('image'), async (req, res) => {
     })
 
     if (!r.ok) {
-      console.error('pixelcut error:', r.status)
       return res.status(r.status).json({ error: 'upstream error ' + r.status })
     }
 
@@ -62,11 +56,56 @@ app.post('/api/removebg', upload.single('image'), async (req, res) => {
     res.set('Content-Length', buf.length)
     res.send(buf)
   } catch (e) {
-    console.error('proxy error:', e.message)
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// proxy enhance hd
+app.post('/api/enhance', upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no image' })
+
+  try {
+    // 1. Upload to catbox
+    const uploadForm = new FormData();
+    uploadForm.append('reqtype', 'fileupload');
+    uploadForm.append('fileToUpload', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+
+    const uploadRes = await fetch('https://catbox.moe/user/api.php', {
+      method: 'POST',
+      body: uploadForm
+    });
+
+    if (!uploadRes.ok) throw new Error('Upload to temp host failed');
+    const tempImageUrl = await uploadRes.text();
+
+    // 2. Enhance via Betabotz API
+    const encodedUrl = encodeURIComponent(tempImageUrl);
+    const apiUrl = `https://api.betabotz.eu.org/api/tools/remini?url=${encodedUrl}&apikey=Btz-Flores`;
+
+    const enhanceRes = await fetch(apiUrl);
+    const enhanceData = await enhanceRes.json();
+
+    if (!enhanceData.status || !enhanceData.url) {
+      throw new Error(`Enhance API error: ${enhanceData.message || 'Unknown error'}`);
+    }
+
+    // 3. Download result
+    const finalImageRes = await fetch(enhanceData.url);
+    if (!finalImageRes.ok) throw new Error('Download enhanced failed');
+
+    const resultBuffer = Buffer.from(await finalImageRes.arrayBuffer());
+    
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Content-Length', resultBuffer.length);
+    res.send(resultBuffer);
+  } catch (e) {
     res.status(500).json({ error: e.message })
   }
 })
 
 app.listen(PORT, () => {
-  console.log(`rmbg server listening on :${PORT}`)
+  console.log(`ruby-tools server listening on :${PORT}`)
 })
