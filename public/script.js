@@ -288,24 +288,78 @@ env.backends.onnx.wasm.numThreads = 1;
         var popup=document.createElement('div');
         popup.style.position='fixed';
         popup.style.top='0';popup.style.left='0';popup.style.right='0';popup.style.bottom='0';
-        popup.style.backgroundColor='rgba(0,0,0,0.85)';
+        popup.style.backgroundColor='rgba(0,0,0,0.9)';
         popup.style.zIndex='9999';
         popup.style.display='flex';
+        popup.style.flexDirection='column';
         popup.style.alignItems='center';
         popup.style.justifyContent='center';
-        popup.style.backdropFilter='blur(4px)';
+        popup.style.backdropFilter='blur(6px)';
         popup.style.cursor='zoom-out';
         
-        var img=document.createElement('img');
-        img.src=jobs[idx].resultUrl;
-        img.style.maxWidth='90vw';
-        img.style.maxHeight='90vh';
-        img.style.objectFit='contain';
-        img.style.background='repeating-conic-gradient(var(--border) 0% 25%,var(--surface) 0% 50%) 50%/20px 20px';
-        img.style.borderRadius='8px';
-        img.style.boxShadow='0 10px 30px rgba(0,0,0,0.5)';
+        var container=document.createElement('div');
+        container.style.display='flex';
+        container.style.gap='24px';
+        container.style.maxWidth='90vw';
+        container.style.maxHeight='85vh';
+        container.style.alignItems='center';
+        container.style.justifyContent='center';
         
-        popup.appendChild(img);
+        var beforeWrap=document.createElement('div');
+        beforeWrap.style.display='flex';
+        beforeWrap.style.flexDirection='column';
+        beforeWrap.style.alignItems='center';
+        beforeWrap.style.gap='8px';
+        
+        var beforeImg=document.createElement('img');
+        beforeImg.src=jobs[idx].origUrl;
+        beforeImg.style.maxWidth='42vw';
+        beforeImg.style.maxHeight='75vh';
+        beforeImg.style.objectFit='contain';
+        beforeImg.style.borderRadius='8px';
+        beforeImg.style.boxShadow='0 10px 30px rgba(0,0,0,0.5)';
+        
+        var beforeLabel=document.createElement('span');
+        beforeLabel.textContent='original';
+        beforeLabel.style.color='var(--muted)';
+        beforeLabel.style.fontFamily='var(--mono)';
+        beforeLabel.style.fontSize='12px';
+        beforeLabel.style.textTransform='uppercase';
+        beforeLabel.style.letterSpacing='2px';
+        
+        beforeWrap.appendChild(beforeImg);
+        beforeWrap.appendChild(beforeLabel);
+        
+        var afterWrap=document.createElement('div');
+        afterWrap.style.display='flex';
+        afterWrap.style.flexDirection='column';
+        afterWrap.style.alignItems='center';
+        afterWrap.style.gap='8px';
+        
+        var afterImg=document.createElement('img');
+        afterImg.src=jobs[idx].resultUrl;
+        afterImg.style.maxWidth='42vw';
+        afterImg.style.maxHeight='75vh';
+        afterImg.style.objectFit='contain';
+        afterImg.style.background='repeating-conic-gradient(var(--border) 0% 25%,var(--surface) 0% 50%) 50%/20px 20px';
+        afterImg.style.borderRadius='8px';
+        afterImg.style.boxShadow='0 10px 30px rgba(0,0,0,0.5)';
+        
+        var afterLabel=document.createElement('span');
+        afterLabel.textContent='result';
+        afterLabel.style.color='var(--accent)';
+        afterLabel.style.fontFamily='var(--mono)';
+        afterLabel.style.fontSize='12px';
+        afterLabel.style.textTransform='uppercase';
+        afterLabel.style.letterSpacing='2px';
+        
+        afterWrap.appendChild(afterImg);
+        afterWrap.appendChild(afterLabel);
+        
+        container.appendChild(beforeWrap);
+        container.appendChild(afterWrap);
+        popup.appendChild(container);
+        
         document.body.appendChild(popup);
         popup.addEventListener('click',function(){popup.remove()});
       });
