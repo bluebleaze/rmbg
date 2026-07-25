@@ -264,7 +264,10 @@ env.backends.onnx.wasm.numThreads = 1;
           '<div><div class="img-side orig"><img src="'+jobs[j].origUrl+'"></div><div class="img-side-label">original</div></div>'+
           '<div><div class="img-side result"><img src="'+jobs[j].resultUrl+'"></div><div class="img-side-label">result</div></div>'+
         '</div>'+
-        '<div class="card-actions"><button class="term-btn primary dl-single" data-idx="'+j+'">⬇ download</button></div>';
+        '<div class="card-actions">'+
+          '<button class="term-btn primary dl-single" data-idx="'+j+'">⬇ download</button>'+
+          '<button class="term-btn preview-single" data-idx="'+j+'">👁 preview</button>'+
+        '</div>';
       resultsGrid.appendChild(card);
     }
 
@@ -274,6 +277,37 @@ env.backends.onnx.wasm.numThreads = 1;
       dlBtns[d].addEventListener('click',function(){
         var idx=parseInt(this.getAttribute('data-idx'));
         downloadBlob(jobs[idx].resultBlob,jobs[idx].file.name.replace(/\.[^.]+$/,'')+'-nobg.png');
+      });
+    }
+
+    // bind previews
+    var pBtns=resultsGrid.querySelectorAll('.preview-single');
+    for(var p=0;p<pBtns.length;p++){
+      pBtns[p].addEventListener('click',function(){
+        var idx=parseInt(this.getAttribute('data-idx'));
+        var popup=document.createElement('div');
+        popup.style.position='fixed';
+        popup.style.top='0';popup.style.left='0';popup.style.right='0';popup.style.bottom='0';
+        popup.style.backgroundColor='rgba(0,0,0,0.85)';
+        popup.style.zIndex='9999';
+        popup.style.display='flex';
+        popup.style.alignItems='center';
+        popup.style.justifyContent='center';
+        popup.style.backdropFilter='blur(4px)';
+        popup.style.cursor='zoom-out';
+        
+        var img=document.createElement('img');
+        img.src=jobs[idx].resultUrl;
+        img.style.maxWidth='90vw';
+        img.style.maxHeight='90vh';
+        img.style.objectFit='contain';
+        img.style.background='repeating-conic-gradient(var(--border) 0% 25%,var(--surface) 0% 50%) 50%/20px 20px';
+        img.style.borderRadius='8px';
+        img.style.boxShadow='0 10px 30px rgba(0,0,0,0.5)';
+        
+        popup.appendChild(img);
+        document.body.appendChild(popup);
+        popup.addEventListener('click',function(){popup.remove()});
       });
     }
 
