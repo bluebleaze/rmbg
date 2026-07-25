@@ -39,7 +39,7 @@ The easiest way to deploy without a home server.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rmbg.git
+git clone https://github.com/bluebleaze/ruby-tools.git
 cd rmbg
 ```
 
