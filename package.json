@@ -6,10 +6,11 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "axios": "^1.18.1",
+    "busboy": "^1.6.0",
     "express": "^4.21.0",
-    "multer": "^1.4.5-lts.1",
-    "node-fetch": "^3.3.2",
     "form-data": "^4.0.0",
-    "busboy": "^1.6.0"
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2"
   }
 }

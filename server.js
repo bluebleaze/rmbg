@@ -64,36 +64,45 @@ app.post('/api/removebg', upload.single('image'), async (req, res) => {
 app.post('/api/enhance', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no image' })
 
+  let finalImageUrl = '';
+
   try {
-    // 1. Upload to catbox
-    const uploadForm = new FormData();
-    uploadForm.append('reqtype', 'fileupload');
-    uploadForm.append('fileToUpload', req.file.buffer, {
-      filename: req.file.originalname,
-      contentType: req.file.mimetype,
-    });
+    try {
+      // 1. Upload to catbox
+      const uploadForm = new FormData();
+      uploadForm.append('reqtype', 'fileupload');
+      uploadForm.append('fileToUpload', req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+      });
 
-    const uploadRes = await fetch('https://catbox.moe/user/api.php', {
-      method: 'POST',
-      body: uploadForm
-    });
+      const uploadRes = await fetch('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: uploadForm
+      });
 
-    if (!uploadRes.ok) throw new Error('Upload to temp host failed');
-    const tempImageUrl = await uploadRes.text();
+      if (!uploadRes.ok) throw new Error('Upload to temp host failed');
+      const tempImageUrl = await uploadRes.text();
 
-    // 2. Enhance via Betabotz API
-    const encodedUrl = encodeURIComponent(tempImageUrl);
-    const apiUrl = `https://api.betabotz.eu.org/api/tools/remini?url=${encodedUrl}&apikey=Btz-Flores`;
+      // 2. Enhance via Betabotz API
+      const encodedUrl = encodeURIComponent(tempImageUrl);
+      const apiUrl = `https://api.betabotz.eu.org/api/tools/remini?url=${encodedUrl}&apikey=Btz-Flores`;
 
-    const enhanceRes = await fetch(apiUrl);
-    const enhanceData = await enhanceRes.json();
+      const enhanceRes = await fetch(apiUrl);
+      const enhanceData = await enhanceRes.json();
 
-    if (!enhanceData.status || !enhanceData.url) {
-      throw new Error(`Enhance API error: ${enhanceData.message || 'Unknown error'}`);
+      if (!enhanceData.status || !enhanceData.url || enhanceData.url.endsWith('.bin')) {
+        throw new Error(`Betabotz API error: ${enhanceData.message || 'Unknown error'}`);
+      }
+      
+      finalImageUrl = enhanceData.url;
+    } catch (primaryErr) {
+      console.log('Betabotz failed in proxy, returning 500 so fallback logic can take over if needed (or we can just fail)', primaryErr.message);
+      throw primaryErr;
     }
 
     // 3. Download result
-    const finalImageRes = await fetch(enhanceData.url);
+    const finalImageRes = await fetch(finalImageUrl);
     if (!finalImageRes.ok) throw new Error('Download enhanced failed');
 
     const resultBuffer = Buffer.from(await finalImageRes.arrayBuffer());
