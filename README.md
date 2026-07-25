@@ -16,7 +16,7 @@ AI background removal website dengan terminal-styled UI.
 ### 1. Clone repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rmbg.git
+git clone https://github.com/bluebleaze/rmbg.git
 cd rmbg
 ```
 
