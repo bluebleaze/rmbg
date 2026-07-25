@@ -4,20 +4,24 @@
 
 <h1 align="center">⟩_✂ rmbg</h1>
 
-<p align="center">AI background removal website dengan terminal-styled UI.</p>
+<p align="center">AI background removal web app with a Linux terminal aesthetic.</p>
 
-## Fitur
+<p align="center">
+  <em>Originally built as a feature for the popular WhatsApp Baileys bot <b>Ruby</b>, now extracted into a standalone, multi-file web app.</em>
+</p>
 
-- Upload multi-file (drag & drop)
-- AI background removal via Pixa
-- Side-by-side preview (original vs result)
-- Download individual atau semua sekaligus
-- Responsive, mobile-friendly
-- Terminal/Linux aesthetic UI
+## Features
 
-## Deploy ke Home Server
+- **Multi-file Upload** (drag & drop support)
+- **AI Background Removal** powered by Pixa
+- **Side-by-side Preview** (original vs result)
+- **Batch Download** or individual file saving
+- **Responsive** mobile-friendly layout
+- **Terminal Aesthetic** (Monospace fonts, CLI prompt vibes)
 
-### 1. Clone repo
+## Deploy to a Home Server
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/bluebleaze/rmbg.git
@@ -30,49 +34,50 @@ cd rmbg
 npm install
 ```
 
-### 3. Jalankan
+### 3. Run the server
 
 ```bash
-# test
+# quick test
 node server.js
 
-# production (pm2)
+# production (using pm2)
 pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup
 ```
 
-Server jalan di `http://localhost:3456`
+The server runs on `http://localhost:3456`.
 
-### 4. Expose ke public
+### 4. Expose to the public
 
-**Cloudflare Tunnel (recommended):**
+**Using Cloudflare Tunnel (recommended):**
 
 ```bash
-# quick test (URL random)
+# quick test (random URL)
 cloudflared tunnel --url http://localhost:3456
 
-# persistent (pm2)
+# persistent (run alongside pm2)
 pm2 start cloudflared -- tunnel --url http://localhost:3456
 pm2 save
 ```
 
-## Struktur
+## Project Structure
 
-```
+```text
 rmbg/
-├── index.html              ← main page
+├── index.html              ← main frontend page
 ├── public/
-│   ├── style.css           ← styling
-│   └── script.js           ← frontend logic
-├── server.js               ← Express proxy + static server
-├── package.json
-├── ecosystem.config.cjs    ← pm2 config
-└── .gitignore
+│   ├── style.css           ← terminal UI styling
+│   ├── script.js           ← frontend logic & queue handling
+│   └── favicon.svg         
+├── server.js               ← Express proxy (bypasses CORS) & static server
+├── package.json            
+├── ecosystem.config.cjs    ← pm2 auto-restart config
+└── .gitignore              
 ```
 
 ## Tech Stack
 
-- Express.js (server + static hosting)
-- Pixa AI API (background removal)
-- Vanilla JS (no framework)
+- **Express.js** (backend proxy + static hosting)
+- **Pixa AI API** (background removal engine)
+- **Vanilla JS & CSS** (zero frontend frameworks)
