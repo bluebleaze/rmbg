@@ -68,36 +68,9 @@ app.post('/api/enhance', upload.single('image'), async (req, res) => {
 
   try {
     try {
-      // 1. Upload to catbox
-      const uploadForm = new FormData();
-      uploadForm.append('reqtype', 'fileupload');
-      uploadForm.append('fileToUpload', req.file.buffer, {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype,
-      });
-
-      const uploadRes = await fetch('https://catbox.moe/user/api.php', {
-        method: 'POST',
-        body: uploadForm
-      });
-
-      if (!uploadRes.ok) throw new Error('Upload to temp host failed');
-      const tempImageUrl = await uploadRes.text();
-
-      // 2. Enhance via Betabotz API
-      const encodedUrl = encodeURIComponent(tempImageUrl);
-      const apiUrl = `https://api.betabotz.eu.org/api/tools/remini?url=${encodedUrl}&apikey=Btz-Flores`;
-
-      const enhanceRes = await fetch(apiUrl);
-      const enhanceData = await enhanceRes.json();
-
-      if (!enhanceData.status || !enhanceData.url || enhanceData.url.endsWith('.bin')) {
-        throw new Error(`Betabotz API error: ${enhanceData.message || 'Unknown error'}`);
-      }
-      
-      finalImageUrl = enhanceData.url;
+      finalImageUrl = await enhanceViaImgUpscaler(req.file.buffer);
     } catch (primaryErr) {
-      console.log('Betabotz failed in proxy, returning 500 so fallback logic can take over if needed (or we can just fail)', primaryErr.message);
+      console.log('ImgUpscaler API failed', primaryErr.message);
       throw primaryErr;
     }
 

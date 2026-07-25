@@ -120,47 +120,10 @@ export default async function handler(req, res) {
     let finalImageUrl = '';
 
     try {
-      // Step 1: Upload to catbox (or similar temporary host) to get a URL
-      const uploadForm = new FormData();
-      uploadForm.append('reqtype', 'fileupload');
-      uploadForm.append('fileToUpload', imageBuffer, {
-        filename: fileName,
-        contentType: mimeType,
-      });
-
-      const uploadRes = await fetch('https://catbox.moe/user/api.php', {
-        method: 'POST',
-        body: uploadForm
-      });
-
-      if (!uploadRes.ok) {
-         throw new Error('Failed to upload image to temp host for processing');
-      }
-
-      const tempImageUrl = await uploadRes.text();
-
-      // Step 2: Send to Betabotz Remini API
-      const encodedUrl = encodeURIComponent(tempImageUrl);
-      const apiUrl = `https://api.betabotz.eu.org/api/tools/remini?url=${encodedUrl}&apikey=Btz-Flores`;
-
-      const enhanceRes = await fetch(apiUrl);
-      const enhanceData = await enhanceRes.json();
-
-      if (!enhanceData.status || !enhanceData.url || enhanceData.url.endsWith('.bin')) {
-        throw new Error(`Betabotz API error or invalid output`);
-      }
-      
-      finalImageUrl = enhanceData.url;
-    } catch (primaryErr) {
-      console.log('Betabotz failed, switching to ImgUpscaler fallback...', primaryErr.message);
-      
-      // FALLBACK TO IMGUPSCALER FREE
-      try {
-        finalImageUrl = await enhanceViaImgUpscaler(imageBuffer);
-      } catch (fallbackErr) {
-        console.error('ImgUpscaler fallback also failed:', fallbackErr.message);
-        throw new Error('All enhance APIs failed');
-      }
+      finalImageUrl = await enhanceViaImgUpscaler(imageBuffer);
+    } catch (fallbackErr) {
+      console.error('ImgUpscaler API failed:', fallbackErr.message);
+      throw new Error('Enhance API failed');
     }
 
     // Step 3: Fetch the enhanced image
