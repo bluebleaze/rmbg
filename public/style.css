@@ -229,8 +229,14 @@ ul{list-style:none}
 footer{
   text-align:center;padding:32px 24px;border-top:1px solid var(--border);
   font-size:.8rem;color:var(--muted);margin-top:auto;
+  display:flex;flex-direction:column;gap:12px;align-items:center;
 }
-footer span{color:var(--accent)}
+.footer-social a{
+  display:flex;align-items:center;gap:6px;color:var(--muted);
+  transition:color .2s;
+}
+.footer-social a:hover{color:var(--heading)}
+.footer-text span{color:var(--accent)}
 
 /* ── Responsive ── */
 @media(max-width:700px){
