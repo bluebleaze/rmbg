@@ -43,10 +43,36 @@ env.backends.onnx.wasm.numThreads = 1;
   var fallbackPipeline=null;
   var currentMode='rmbg'; // 'rmbg' or 'hd'
 
+  /* ── ASCII box animation ── */
+  var asciiBox = document.getElementById('asciiBox');
+  function animateAsciiBox(){
+    var raw=asciiBox.textContent.trim();
+    var lines=raw.split('\n');
+    asciiBox.innerHTML='';
+    var scanline=document.createElement('div');
+    scanline.className='scanline';
+    asciiBox.appendChild(scanline);
+    asciiBox.classList.remove('glow');
+    lines.forEach(function(line){
+      var span=document.createElement('span');
+      span.className='ascii-line';
+      span.textContent=line||'\u00a0';
+      asciiBox.appendChild(span);
+    });
+    var spans=asciiBox.querySelectorAll('.ascii-line');
+    spans.forEach(function(s,i){
+      setTimeout(function(){s.classList.add('visible')},i*60);
+    });
+    setTimeout(function(){
+      scanline.classList.add('active');
+      asciiBox.classList.add('glow');
+    },spans.length*60+200);
+  }
+  animateAsciiBox();
+
   /* ── Mode Switching ── */
   var modeSwitches = document.querySelectorAll('.mode-switch');
   var promptCmd = document.getElementById('promptCmd');
-  var asciiBox = document.getElementById('asciiBox');
 
   modeSwitches.forEach(function(btn) {
     btn.addEventListener('click', function(e) {
@@ -62,39 +88,15 @@ env.backends.onnx.wasm.numThreads = 1;
       promptCmd.textContent = 'ruby-tools --' + currentMode;
       
       if (currentMode === 'rmbg') {
-        asciiBox.textContent = `
-┌─────────────────────────┐
-│                         │
-│   ╭───────────────╮     │
-│   │ rmbg v2.0     │     │
-│   │ AI removal    │     │
-│   │               │     │
-│   │ usage: upload │     │
-│   │ format: image │     │
-│   │               │     │
-│   │ out: .png     │     │
-│   ╰───────────────╯     │
-│                         │
-└─────────────────────────┘`;
+        asciiBox.textContent = '┌─────────────────────────┐\n│                         │\n│   ╭───────────────╮     │\n│   │ rmbg v2.0     │     │\n│   │ AI removal    │     │\n│   │               │     │\n│   │ usage: upload │     │\n│   │ format: image │     │\n│   │               │     │\n│   │ out: .png     │     │\n│   ╰───────────────╯     │\n│                         │\n└─────────────────────────┘';
+        animateAsciiBox();
         dropZone.style.pointerEvents = 'auto';
         dropZone.style.opacity = '1';
         document.querySelector('.gz-label').innerHTML = 'drag images here or <span>browse</span>';
         document.querySelector('.gz-hint').style.display = 'block';
       } else if (currentMode === 'hd') {
-        asciiBox.textContent = `
-┌─────────────────────────┐
-│                         │
-│   ╭───────────────╮     │
-│   │ hd-ify v1.0   │     │
-│   │ AI enhancer   │     │
-│   │               │     │
-│   │ STATUS:       │     │
-│   │ COMING SOON   │     │
-│   │ (API OFFLINE) │     │
-│   │               │     │
-│   ╰───────────────╯     │
-│                         │
-└─────────────────────────┘`;
+        asciiBox.textContent = '┌─────────────────────────┐\n│                         │\n│   ╭───────────────╮     │\n│   │ hd-ify v1.0   │     │\n│   │ AI enhancer   │     │\n│   │               │     │\n│   │ STATUS:       │     │\n│   │ COMING SOON   │     │\n│   │ (API OFFLINE) │     │\n│   │               │     │\n│   ╰───────────────╯     │\n│                         │\n└─────────────────────────┘';
+        animateAsciiBox();
         dropZone.style.pointerEvents = 'none';
         dropZone.style.opacity = '0.4';
         document.querySelector('.gz-label').innerHTML = 'HD mode is currently <span style="color:var(--error)">coming soon</span>';

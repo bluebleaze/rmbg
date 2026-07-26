@@ -99,7 +99,29 @@ ul{list-style:none}
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius);padding:16px 20px;
   box-shadow:0 0 40px var(--accent-glow);
-  flex-shrink:0;margin:0;
+  flex-shrink:0;margin:0;position:relative;overflow:hidden;
+  transition:box-shadow 1s ease;
+}
+.ascii-box.glow{
+  box-shadow:0 0 40px var(--accent-glow),0 0 60px rgba(74,127,181,0.08);
+}
+.ascii-box .ascii-line{
+  display:block;opacity:0;transform:translateY(4px);
+  transition:opacity .25s ease,transform .25s ease;
+}
+.ascii-box .ascii-line.visible{
+  opacity:1;transform:translateY(0);
+}
+.ascii-box .scanline{
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(74,127,181,0.12),transparent);
+  opacity:0;pointer-events:none;
+}
+.ascii-box .scanline.active{
+  opacity:1;animation:ascii-scan 3s linear infinite;
+}
+@keyframes ascii-scan{
+  0%{top:0}100%{top:100%}
 }
 
 /* ── Drop zone ── */
