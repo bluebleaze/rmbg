@@ -2,6 +2,8 @@ import express from 'express'
 import multer from 'multer'
 import fetch from 'node-fetch'
 import FormData from 'form-data'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
@@ -11,11 +13,35 @@ const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } })
 
 const PORT = process.env.PORT || 3456
 
-// serve frontend
+// security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // allow cdn fonts
+  crossOriginEmbedderPolicy: false
+}))
+app.disable('x-powered-by')
+
+// api rate limiting: 30 requests per 15 minutes per IP
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too many requests, try again later' }
+})
+
+// serve frontend - explicitly block sensitive files
+const blocklist = ['.env', '.git', 'server.js', 'package.json', 'package-lock.json', 'ecosystem.config.cjs', 'vercel.json']
+app.use((req, res, next) => {
+  const path = req.path.toLowerCase()
+  if (blocklist.some(b => path.includes(b))) {
+    return res.status(403).end()
+  }
+  next()
+})
 app.use(express.static(join(__dirname, '.')))
 
 // proxy remove bg
-app.post('/api/removebg', upload.single('image'), async (req, res) => {
+app.post('/api/removebg', apiLimiter, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no image' })
 
   try {
@@ -61,7 +87,7 @@ app.post('/api/removebg', upload.single('image'), async (req, res) => {
 })
 
 // proxy enhance hd
-app.post('/api/enhance', upload.single('image'), async (req, res) => {
+app.post('/api/enhance', apiLimiter, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no image' })
 
   let finalImageUrl = '';
