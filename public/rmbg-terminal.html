@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rmbg v2.0 — Terminal</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  .terminal {
+    position: relative;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 48px 40px 40px;
+    width: 420px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.03),
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 80px rgba(0,255,136,0.03);
+  }
+
+  .terminal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 32px;
+    background: #1a1a1a;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid #333;
+  }
+
+  .dots {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    display: flex;
+    gap: 7px;
+    z-index: 2;
+  }
+  .dots span {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    display: block;
+  }
+  .dots .r { background: #ff5f57; }
+  .dots .y { background: #febc2e; }
+  .dots .g { background: #28c840; }
+
+  .title-bar {
+    position: absolute;
+    top: 7px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    z-index: 1;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    margin-top: 8px;
+  }
+
+  .line {
+    opacity: 0;
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre;
+  }
+
+  .line.visible {
+    opacity: 1;
+  }
+
+  .prompt { color: #28c840; }
+  .cmd { color: #fff; }
+  .key { color: #888; }
+  .val { color: #5af; }
+  .accent { color: #0f6; }
+  .dim { color: #555; }
+  .warn { color: #febc2e; }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: #0f6;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .box-line {
+    color: #444;
+  }
+
+  .scanline {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0,255,136,0.08), transparent);
+    opacity: 0;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .scanline.active {
+    opacity: 1;
+    animation: scan 3s linear infinite;
+  }
+
+  @keyframes scan {
+    0% { top: 32px; }
+    100% { top: 100%; }
+  }
+
+  .glow {
+    position: absolute;
+    inset: -1px;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    pointer-events: none;
+    border: 1px solid rgba(0,255,136,0.15);
+    box-shadow: 0 0 30px rgba(0,255,136,0.05);
+  }
+  .glow.active { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="terminal">
+  <div class="dots">
+    <span class="r"></span>
+    <span class="y"></span>
+    <span class="g"></span>
+  </div>
+  <div class="title-bar">rmbg — zsh</div>
+  <div class="scanline" id="scanline"></div>
+  <div class="glow" id="glow"></div>
+
+  <div class="content" id="content">
+    <div class="line" id="line-0"><span class="prompt">❯ </span><span class="cmd" id="typed"></span><span class="cursor" id="cursor"></span></div>
+    <div class="line" id="line-1"></div>
+    <div class="line" id="line-2"><span class="box-line">  ┌─────────────────────────┐</span></div>
+    <div class="line" id="line-3"><span class="box-line">  │                         │</span></div>
+    <div class="line" id="line-4"><span class="box-line">  │</span>    <span class="accent">╭───────────────╮</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-5"><span class="box-line">  │</span>    <span class="accent">│</span>  <span class="cmd" style="font-weight:700">rmbg v2.0</span>    <span class="accent">│</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-6"><span class="box-line">  │</span>    <span class="accent">│</span>  <span class="dim">AI removal</span>   <span class="accent">│</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-7"><span class="box-line">  │</span>    <span class="accent">│</span>               <span class="accent">│</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-8"><span class="box-line">  │</span>    <span class="accent">│</span>  <span class="key">usage:</span> <span class="val">upload</span> <span class="accent">│</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-9"><span class="box-line">  │</span>    <span class="accent">│</span>  <span class="key">format:</span> <span class="val">image</span><span class="accent">│</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-10"><span class="box-line">  │</span>    <span class="accent">│</span>               <span class="accent">│</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-11"><span class="box-line">  │</span>    <span class="accent">│</span>  <span class="key">out:</span> <span class="warn">.png</span>    <span class="accent">│</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-12"><span class="box-line">  │</span>    <span class="accent">╰───────────────╯</span>  <span class="box-line">│</span></div>
+    <div class="line" id="line-13"><span class="box-line">  │                         │</span></div>
+    <div class="line" id="line-14"><span class="box-line">  └─────────────────────────┘</span></div>
+    <div class="line" id="line-15"></div>
+    <div class="line" id="line-16"><span class="accent">✓</span> <span class="dim">ready. drop an image to start.</span></div>
+  </div>
+</div>
+
+<script>
+  const typed = document.getElementById('typed');
+  const cursor = document.getElementById('cursor');
+  const scanline = document.getElementById('scanline');
+  const glow = document.getElementById('glow');
+  const command = 'rmbg --info';
+  let charIdx = 0;
+
+  // Phase 1: type command
+  function typeChar() {
+    if (charIdx < command.length) {
+      typed.textContent += command[charIdx];
+      charIdx++;
+      setTimeout(typeChar, 60 + Math.random() * 80);
+    } else {
+      // Hide cursor briefly, then reveal lines
+      setTimeout(() => {
+        cursor.style.display = 'none';
+        revealLines();
+      }, 400);
+    }
+  }
+
+  // Phase 2: reveal lines one by one
+  function revealLines() {
+    const lines = [];
+    for (let i = 1; i <= 16; i++) {
+      const el = document.getElementById('line-' + i);
+      if (el) lines.push(el);
+    }
+
+    let idx = 0;
+    function showNext() {
+      if (idx < lines.length) {
+        lines[idx].classList.add('visible');
+        idx++;
+        const delay = idx <= 2 ? 80 : (idx >= 14 ? 120 : 50);
+        setTimeout(showNext, delay);
+      } else {
+        // Phase 3: ambient effects
+        setTimeout(() => {
+          scanline.classList.add('active');
+          glow.classList.add('active');
+        }, 300);
+      }
+    }
+    showNext();
+  }
+
+  // Start
+  document.getElementById('line-0').classList.add('visible');
+  setTimeout(typeChar, 600);
+</script>
+
+</body>
+</html>
