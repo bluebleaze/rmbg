@@ -40,7 +40,7 @@ The easiest way to deploy without a home server.
 
 ```bash
 git clone https://github.com/bluebleaze/ruby-tools.git
-cd rmbg
+cd ruby-tools
 ```
 
 ### 2. Install dependencies
