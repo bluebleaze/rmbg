@@ -8,6 +8,7 @@
   "rewrites": [
     { "source": "/api/removebg", "destination": "/api/removebg.js" },
     { "source": "/api/enhance", "destination": "/api/enhance.js" },
+    { "source": "/public/(.*)", "destination": "/public/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
