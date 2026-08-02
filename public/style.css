@@ -231,6 +231,48 @@ footer{
   font-size:.8rem;color:var(--muted);margin-top:auto;
   display:flex;flex-direction:column;gap:12px;align-items:center;
 }
+
+/* ── TikTok Mode ── */
+.tiktok-input{margin-bottom:20px}
+.tt-url-wrap{display:flex;gap:8px}
+.tt-url{
+  flex:1;padding:10px 14px;font:13px var(--mono);color:var(--heading);
+  background:var(--surface);border:1px solid var(--border);outline:none;
+  transition:border-color .2s;
+}
+.tt-url:focus{border-color:var(--accent)}
+.tt-url::placeholder{color:var(--muted)}
+.tt-hint{font-size:11px;color:var(--muted);margin-top:8px}
+
+.tiktok-result{margin-top:20px}
+.tt-card{
+  display:flex;gap:16px;background:var(--surface);border:1px solid var(--border);
+  padding:16px;margin-bottom:16px;
+}
+.tt-cover-wrap{flex-shrink:0}
+.tt-cover{width:120px;height:160px;object-fit:cover;border-radius:4px;background:var(--bg)}
+.tt-info{flex:1;display:flex;flex-direction:column;gap:6px;font-size:12px;overflow:hidden}
+.tt-author{color:var(--accent);font-weight:600}
+.tt-title{color:var(--text);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tt-stats{color:var(--muted);display:flex;flex-wrap:wrap;gap:12px}
+.tt-stats span{display:flex;align-items:center;gap:4px}
+.tt-music{color:var(--muted);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.tt-downloads{display:flex;flex-direction:column;gap:8px}
+.tt-dl-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);border:1px solid var(--border);padding:10px 14px;
+  font-size:12px;transition:border-color .2s;
+}
+.tt-dl-item:hover{border-color:var(--accent)}
+.tt-dl-label{color:var(--text)}
+.tt-dl-type{color:var(--accent);text-transform:uppercase;font-weight:600;letter-spacing:.5px}
+
+@media(max-width:600px){
+  .tt-card{flex-direction:column}
+  .tt-cover{width:100%;height:200px}
+  .tt-url-wrap{flex-direction:column}
+}
 .footer-social a{
   display:flex;align-items:center;gap:6px;color:var(--muted);
   transition:color .2s;

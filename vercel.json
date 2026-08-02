@@ -2,12 +2,16 @@
   "version": 2,
   "builds": [
     { "src": "api/removebg.js", "use": "@vercel/node" },
+    { "src": "api/tiktok.js", "use": "@vercel/node" },
+    { "src": "api/tiktok-proxy.js", "use": "@vercel/node" },
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "public/**", "use": "@vercel/static" }
   ],
   "rewrites": [
     { "source": "/api/removebg", "destination": "/api/removebg.js" },
     { "source": "/api/enhance", "destination": "/api/enhance.js" },
+    { "source": "/api/tiktok", "destination": "/api/tiktok.js" },
+    { "source": "/api/tiktok-proxy", "destination": "/api/tiktok-proxy.js" },
     { "source": "/public/(.*)", "destination": "/public/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

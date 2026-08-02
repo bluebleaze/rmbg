@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ruby Tools — Free AI Background Remover & Image Enhancer</title>
-<meta name="description" content="Free AI-powered image utilities. Remove backgrounds instantly in high quality (RMBG v2) and enhance image resolution. Fast, batch processing, local fallback support.">
-<meta name="keywords" content="ruby tools, ruby tool, removebg, remove background, hapus background, hapus latar belakang, ai background remover, rmbg v2, image enhancer, transparent background, bulk remove background, free remove background">
+<title>Ruby Tools — Free AI Background Remover, Image Enhancer & TikTok Downloader</title>
+<meta name="description" content="Free AI-powered image utilities. Remove backgrounds instantly (RMBG v2), enhance image resolution, and download TikTok videos without watermark. Fast, batch processing, local fallback support.">
+<meta name="keywords" content="ruby tools, ruby tool, removebg, remove background, hapus background, hapus latar belakang, ai background remover, rmbg v2, image enhancer, transparent background, bulk remove background, free remove background, tiktok downloader, download tiktok, tiktok no watermark, tiktok mp4">
 <meta name="author" content="ruby@home">
 <meta name="theme-color" content="#111110">
 <link rel="canonical" href="https://rubytool.space/">
@@ -64,6 +64,7 @@
   </button>
   <ul class="nav-links">
     <li><a href="#" class="mode-switch active" data-mode="rmbg">--rmbg</a></li>
+    <li><a href="#" class="mode-switch" data-mode="tiktok">--tiktok</a></li>
     <li><a href="#" class="mode-switch" data-mode="hd" style="position:relative;">--hd <span style="position:absolute; top:-8px; right:-25px; font-size:9px; background:var(--error); color:#fff; padding:2px 4px; border-radius:3px; letter-spacing:0.5px;">WIP</span></a></li>
     <li><a href="https://bluebleaze.github.io/">About</a></li>
     <li><a href="https://github.com/bluebleaze/rmbg">GitHub</a></li>
@@ -107,6 +108,29 @@
   <div class="gz-label">drag images here or <span>browse</span></div>
   <div class="gz-hint">jpg / png • max 10 MB each • multiple files supported</div>
   <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple>
+</div>
+
+<div class="tiktok-input" id="tiktokInput" style="display:none">
+  <div class="tt-url-wrap">
+    <input type="text" id="ttUrl" class="tt-url" placeholder="paste tiktok url here..." autocomplete="off" spellcheck="false">
+    <button class="term-btn primary" id="ttGoBtn">⬇ download</button>
+  </div>
+  <div class="tt-hint">supports vm.tiktok.com, tiktok.com, and douyin links</div>
+</div>
+
+<div class="tiktok-result" id="tiktokResult" style="display:none">
+  <div class="tt-card">
+    <div class="tt-cover-wrap">
+      <img id="ttCover" class="tt-cover" src="" alt="cover">
+    </div>
+    <div class="tt-info">
+      <div class="tt-author" id="ttAuthor"></div>
+      <div class="tt-title" id="ttTitle"></div>
+      <div class="tt-stats" id="ttStats"></div>
+      <div class="tt-music" id="ttMusic"></div>
+    </div>
+  </div>
+  <div class="tt-downloads" id="ttDownloads"></div>
 </div>
 
 <div class="error-box" id="error"></div>

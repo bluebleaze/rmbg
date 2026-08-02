@@ -41,7 +41,7 @@ env.backends.onnx.wasm.numThreads = 1;
   var processing=false;
   var useFallback=false;
   var fallbackPipeline=null;
-  var currentMode='rmbg'; // 'rmbg' or 'hd'
+  var currentMode='rmbg'; // 'rmbg' or 'hd' or 'tiktok'
 
   /* ── ASCII box animation ── */
   var asciiBox = document.getElementById('asciiBox');
@@ -70,48 +70,187 @@ env.backends.onnx.wasm.numThreads = 1;
   }
   animateAsciiBox();
 
+  var termOutput = document.getElementById('termOutput');
+  var defaultTermOutput = termOutput.innerHTML;
+
+  /* ── TikTok DOM refs ── */
+  var tiktokInput = document.getElementById('tiktokInput');
+  var ttUrl = document.getElementById('ttUrl');
+  var ttGoBtn = document.getElementById('ttGoBtn');
+  var tiktokResult = document.getElementById('tiktokResult');
+  var ttCover = document.getElementById('ttCover');
+  var ttAuthor = document.getElementById('ttAuthor');
+  var ttTitle = document.getElementById('ttTitle');
+  var ttStats = document.getElementById('ttStats');
+  var ttMusic = document.getElementById('ttMusic');
+  var ttDownloads = document.getElementById('ttDownloads');
+
   /* ── Mode Switching ── */
   var modeSwitches = document.querySelectorAll('.mode-switch');
   var promptCmd = document.getElementById('promptCmd');
+
+  function hideAllInputs() {
+    dropZone.style.display = 'none';
+    tiktokInput.style.display = 'none';
+    tiktokResult.style.display = 'none';
+  }
 
   modeSwitches.forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       
-      // Update nav active state
       modeSwitches.forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       
       currentMode = this.getAttribute('data-mode');
-      
-      // Update UI texts
       promptCmd.textContent = 'ruby-tools --' + currentMode;
+      hideAllInputs();
       
       if (currentMode === 'rmbg') {
         asciiBox.textContent = '┌─────────────────────────┐\n│                         │\n│   ╭───────────────╮     │\n│   │ rmbg v2.0     │     │\n│   │ AI removal    │     │\n│   │               │     │\n│   │ usage: upload │     │\n│   │ format: image │     │\n│   │               │     │\n│   │ out: .png     │     │\n│   ╰───────────────╯     │\n│                         │\n└─────────────────────────┘';
         animateAsciiBox();
+        dropZone.style.display = 'block';
         dropZone.style.pointerEvents = 'auto';
         dropZone.style.opacity = '1';
         document.querySelector('.gz-label').innerHTML = 'drag images here or <span>browse</span>';
         document.querySelector('.gz-hint').style.display = 'block';
+        termOutput.innerHTML = defaultTermOutput;
       } else if (currentMode === 'hd') {
         asciiBox.textContent = '┌─────────────────────────┐\n│                         │\n│   ╭───────────────╮     │\n│   │ hd-ify v1.0   │     │\n│   │ AI enhancer   │     │\n│   │               │     │\n│   │ STATUS:       │     │\n│   │ COMING SOON   │     │\n│   │ (API OFFLINE) │     │\n│   │               │     │\n│   ╰───────────────╯     │\n│                         │\n└─────────────────────────┘';
         animateAsciiBox();
+        dropZone.style.display = 'block';
         dropZone.style.pointerEvents = 'none';
         dropZone.style.opacity = '0.4';
         document.querySelector('.gz-label').innerHTML = 'HD mode is currently <span style="color:var(--error)">coming soon</span>';
         document.querySelector('.gz-hint').style.display = 'none';
+        termOutput.innerHTML = defaultTermOutput;
+      } else if (currentMode === 'tiktok') {
+        asciiBox.textContent = '┌─────────────────────────┐\n│                         │\n│   ╭───────────────╮     │\n│   │ tiktok-dl 1.0 │     │\n│   │ no watermark  │     │\n│   │               │     │\n│   │ usage: paste  │     │\n│   │ format: mp4   │     │\n│   │               │     │\n│   │ + audio       │     │\n│   ╰───────────────╯     │\n│                         │\n└─────────────────────────┘';
+        animateAsciiBox();
+        tiktokInput.style.display = 'block';
+        ttUrl.value = '';
+        document.getElementById('termOutput').innerHTML =
+          '<span class="dim">$</span> <span class="flag">paste</span> tiktok url below<br>' +
+          '<span class="dim">$</span> <span class="flag">video</span> downloaded without watermark<br>' +
+          '<span class="dim">$</span> <span class="flag">audio</span> extracted separately';
       }
       
-      // Reset state on mode switch
       resetBtn.click();
       
-      // Close mobile menu if open
       if (hamburger.classList.contains('active')) {
         hamburger.classList.remove('active');
         navLinks.classList.remove('open');
       }
     });
+  });
+
+  // Show dropZone by default for rmbg
+  dropZone.style.display = 'block';
+
+  /* ── TikTok Download ── */
+  function formatNum(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return '' + n;
+  }
+
+  async function doTiktokDownload() {
+    var url = ttUrl.value.trim();
+    if (!url) { showError('paste a tiktok url first'); return; }
+    if (!/tiktok|douyin/.test(url)) { showError('not a valid tiktok/douyin url'); return; }
+
+    errorEl.style.display = 'none';
+    tiktokResult.style.display = 'none';
+    progressWrap.style.display = 'block';
+    startSpin(document.querySelector('.spinner'));
+    setProgress(30, 'fetching tiktok data...');
+    ttGoBtn.disabled = true;
+    ttGoBtn.textContent = 'loading...';
+
+    var apiUrl = window.location.hostname.includes('vercel.app') ? '/api/tiktok.js' : '/api/tiktok';
+
+    try {
+      var res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url }),
+      });
+
+      if (!res.ok) {
+        var errData = await res.json().catch(function() { return {}; });
+        throw new Error(errData.error || 'server ' + res.status);
+      }
+
+      var json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'unknown error');
+
+      var r = json.result;
+      setProgress(100, 'done');
+
+      // Populate card
+      var proxyBase = window.location.hostname.includes('vercel.app') ? '/api/tiktok-proxy.js?url=' : '/api/tiktok-proxy?url=';
+      // Cover from TikTok oEmbed CDN — no proxy needed
+      ttCover.src = r.cover || '';
+      ttCover.style.display = r.cover ? 'block' : 'none';
+      ttAuthor.textContent = '@' + (r.author.unique_id || r.author.nickname || 'unknown');
+      ttTitle.textContent = r.title || 'no caption';
+      ttStats.innerHTML =
+        '<span>▶ ' + formatNum(r.stats.views) + '</span>' +
+        '<span>♥ ' + formatNum(r.stats.likes) + '</span>' +
+        '<span>💬 ' + formatNum(r.stats.comments) + '</span>' +
+        '<span>↗ ' + formatNum(r.stats.shares) + '</span>';
+      ttMusic.textContent = r.music_title ? '♪ ' + r.music_title : '';
+      ttMusic.style.display = r.music_title ? 'block' : 'none';
+
+      // Build download links
+      ttDownloads.innerHTML = '';
+
+      // Videos/Photos
+      for (var i = 0; i < r.media.length; i++) {
+        var m = r.media[i];
+        var item = document.createElement('div');
+        item.className = 'tt-dl-item';
+
+        var labelMap = {
+          'nowatermark': 'Video (No Watermark)',
+          'nowatermark_hd': 'Video HD (No Watermark)',
+          'watermark': 'Video (With Watermark)',
+          'photo': 'Photo ' + (i + 1),
+        };
+
+        item.innerHTML =
+          '<div><span class="tt-dl-type">' + escHtml(m.type) + '</span> ' +
+          '<span class="tt-dl-label">' + (labelMap[m.type] || m.type) + '</span></div>' +
+          '<a href="' + proxyBase + encodeURIComponent(m.url) + '" target="_blank" class="term-btn primary" download>⬇ download</a>';
+        ttDownloads.appendChild(item);
+      }
+
+      // Audio
+      if (r.music) {
+        var audioItem = document.createElement('div');
+        audioItem.className = 'tt-dl-item';
+        audioItem.innerHTML =
+          '<div><span class="tt-dl-type">audio</span> ' +
+          '<span class="tt-dl-label">♪ ' + escHtml(r.music_title || 'Original Sound') + '</span></div>' +
+          '<a href="' + proxyBase + encodeURIComponent(r.music) + '" target="_blank" class="term-btn primary" download>⬇ download</a>';
+        ttDownloads.appendChild(audioItem);
+      }
+
+      tiktokResult.style.display = 'block';
+
+    } catch (e) {
+      showError(e.message);
+    } finally {
+      stopSpin();
+      progressWrap.style.display = 'none';
+      ttGoBtn.disabled = false;
+      ttGoBtn.textContent = '⬇ download';
+    }
+  }
+
+  ttGoBtn.addEventListener('click', doTiktokDownload);
+  ttUrl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doTiktokDownload();
   });
 
   /* ── Nav scroll ── */
@@ -472,8 +611,10 @@ env.backends.onnx.wasm.numThreads = 1;
     queueEl.style.display='none';progressWrap.style.display='none';fallbackInfo.style.display='none';
     resultsArea.style.display='none';statsSummary.style.display='none';
     globalActions.style.display='none';errorEl.style.display='none';
-    dropZone.style.display='block';progressFill.style.width='0%';
+    if(currentMode !== 'tiktok') dropZone.style.display='block';
+    progressFill.style.width='0%';
     queueList.innerHTML='';resultsGrid.innerHTML='';
+    tiktokResult.style.display='none';
   });
 
   /* ── Helpers ── */
