@@ -159,7 +159,6 @@ app.post('/api/tiktok', apiLimiter, express.json(), async (req, res) => {
     } else {
       if (d.play) result.media.push({ type: 'nowatermark', url: 'https://www.tikwm.com' + d.play })
       if (d.hdplay) result.media.push({ type: 'nowatermark_hd', url: 'https://www.tikwm.com' + d.hdplay })
-      if (d.wmplay) result.media.push({ type: 'watermark', url: 'https://www.tikwm.com' + d.wmplay })
     }
 
     if (oembed.thumbnail_url) result.cover = oembed.thumbnail_url

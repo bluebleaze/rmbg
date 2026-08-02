@@ -67,15 +67,12 @@ function buildResult(data) {
       result.media.push({ type: 'photo', url: img });
     }
   } else {
-    // video - SD first (stable), then HD, then watermark
+    // video - SD first (stable), then HD
     if (data.play) {
       result.media.push({ type: 'nowatermark', url: 'https://www.tikwm.com' + data.play });
     }
     if (data.hdplay) {
       result.media.push({ type: 'nowatermark_hd', url: 'https://www.tikwm.com' + data.hdplay });
-    }
-    if (data.wmplay) {
-      result.media.push({ type: 'watermark', url: 'https://www.tikwm.com' + data.wmplay });
     }
   }
 

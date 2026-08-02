@@ -63,11 +63,11 @@
     <span></span><span></span><span></span>
   </button>
   <ul class="nav-links">
-    <li><a href="#" class="mode-switch active" data-mode="rmbg">--rmbg</a></li>
-    <li><a href="#" class="mode-switch" data-mode="tiktok">--tiktok</a></li>
-    <li><a href="#" class="mode-switch" data-mode="hd" style="position:relative;">--hd <span style="position:absolute; top:-8px; right:-25px; font-size:9px; background:var(--error); color:#fff; padding:2px 4px; border-radius:3px; letter-spacing:0.5px;">WIP</span></a></li>
-    <li><a href="https://bluebleaze.github.io/">About</a></li>
-    <li><a href="https://github.com/bluebleaze/rmbg">GitHub</a></li>
+    <li><a href="#" class="mode-switch active" data-mode="rmbg">✂ --rmbg</a></li>
+    <li><a href="#" class="mode-switch" data-mode="tiktok">▶ --tiktok</a></li>
+    <li><a href="#" class="mode-switch" data-mode="hd" style="position:relative;">◈ --hd <span style="position:absolute; top:-8px; right:-25px; font-size:9px; background:var(--error); color:#fff; padding:2px 4px; border-radius:3px; letter-spacing:0.5px;">WIP</span></a></li>
+    <li><a href="https://bluebleaze.github.io/">⌘ About</a></li>
+    <li><a href="https://github.com/bluebleaze/rmbg">⟨/⟩ GitHub</a></li>
   </ul>
 </nav>
 
@@ -82,9 +82,9 @@
   <div class="term-text">
     <div class="prompt"><span class="user">ruby</span><span class="at">@</span><span class="host">home</span> <span class="path">~</span> <span class="dollar">$</span> <span class="cmd" id="promptCmd">ruby-tools --rmbg</span></div>
     <div class="output" id="termOutput">
-      <span class="dim">$</span> <span class="flag">drop</span> files below or click to select (multiple)<br>
-      <span class="dim">$</span> <span class="flag">batch</span> processing supported natively<br>
-      <span class="dim">$</span> <span class="flag">local fallback</span> enabled for offline resilience
+      <span class="dim">$</span> <span class="flag">↳ drop</span> files below or click to select (multiple)<br>
+      <span class="dim">$</span> <span class="flag">⟳ batch</span> processing supported natively<br>
+      <span class="dim">$</span> <span class="flag">⚡ local fallback</span> enabled for offline resilience
     </div>
   </div>
 <pre class="ascii-box" id="asciiBox">
@@ -105,17 +105,17 @@
 
 <div class="drop-zone" id="dropZone">
   <div class="gz-icon">⟩_</div>
-  <div class="gz-label">drag images here or <span>browse</span></div>
-  <div class="gz-hint">jpg / png • max 10 MB each • multiple files supported</div>
+  <div class="gz-label">↕ drag images here or <span>browse</span></div>
+  <div class="gz-hint">⬡ jpg / png · ◇ max 10 MB each · ⊞ multiple files supported</div>
   <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple>
 </div>
 
 <div class="tiktok-input" id="tiktokInput" style="display:none">
   <div class="tt-url-wrap">
-    <input type="text" id="ttUrl" class="tt-url" placeholder="paste tiktok url here..." autocomplete="off" spellcheck="false">
-    <button class="term-btn primary" id="ttGoBtn">⬇ download</button>
+    <input type="text" id="ttUrl" class="tt-url" placeholder="⌘ paste tiktok url here..." autocomplete="off" spellcheck="false">
+    <button class="term-btn primary" id="ttGoBtn">⬇ fetch</button>
   </div>
-  <div class="tt-hint">supports vm.tiktok.com, tiktok.com, and douyin links</div>
+  <div class="tt-hint">⚑ supports vm.tiktok.com, tiktok.com, and douyin links</div>
 </div>
 
 <div class="tiktok-result" id="tiktokResult" style="display:none">
@@ -137,7 +137,7 @@
 
 <div class="queue" id="queue">
   <div class="queue-header">
-    <span>── queue ──</span>
+    <span>── ☰ queue ──</span>
     <span class="queue-count" id="queueCount">0 files</span>
   </div>
   <div class="queue-list" id="queueList"></div>
@@ -162,13 +162,13 @@
 </div>
 
 <div class="results-area" id="resultsArea">
-  <div class="results-header">── results ──</div>
+  <div class="results-header">── ✦ results ──</div>
   <div class="results-grid" id="resultsGrid"></div>
 </div>
 
 <div class="global-actions" id="globalActions">
   <button class="term-btn primary" id="downloadAllBtn">⬇ download all</button>
-  <button class="term-btn" id="resetBtn">↻ reset</button>
+  <button class="term-btn" id="resetBtn">⟲ reset</button>
 </div>
 
 </div>
@@ -183,7 +183,7 @@
     </a>
   </div>
   <div class="footer-text">
-    <span>ruby-tools</span> • AI utilities • ruby@home
+    <span>ruby-tools</span> · ⚙ AI utilities · ⟩_ ruby@home
   </div>
 </footer>
 

@@ -37,11 +37,113 @@ env.backends.onnx.wasm.numThreads = 1;
   var errorEl=document.getElementById('error');
 
   /* ── State ── */
-  var jobs=[];       // {file, origUrl, resultBlob, resultUrl, status, duration, error}
+  var modeState = {};  // per-mode state
+  var jobs=[];       // active jobs for currentMode
   var processing=false;
   var useFallback=false;
   var fallbackPipeline=null;
-  var currentMode='rmbg'; // 'rmbg' or 'hd' or 'tiktok'
+  var currentMode='rmbg'; 
+  var processingMode=null; // Tracks which mode is currently running the processQueue loop
+
+  function saveCurrentState() {
+    modeState[currentMode] = {
+      jobs: jobs,
+      processing: processing,
+      useFallback: useFallback,
+      queueHtml: queueList.innerHTML,
+      queueDisplay: queueEl.style.display,
+      queueCountText: queueCount.textContent,
+      resultsHtml: resultsGrid.innerHTML,
+      resultsDisplay: resultsArea.style.display,
+      statsDisplay: statsSummary.style.display,
+      statsHtml: summaryText.innerHTML,
+      actionsDisplay: globalActions.style.display,
+      progressDisplay: progressWrap.style.display,
+      errorDisplay: errorEl.style.display,
+      errorText: errorEl.textContent,
+      // TikTok state
+      tiktokResultDisplay: tiktokResult.style.display,
+      tiktokUrl: ttUrl.value,
+      ttCoverSrc: ttCover.src,
+      ttCoverDisplay: ttCover.style.display,
+      ttAuthorText: ttAuthor.textContent,
+      ttTitleText: ttTitle.textContent,
+      ttStatsHtml: ttStats.innerHTML,
+      ttMusicText: ttMusic.textContent,
+      ttMusicDisplay: ttMusic.style.display,
+      ttDownloadsHtml: ttDownloads.innerHTML,
+    };
+  }
+
+  function restoreState(mode) {
+    var s = modeState[mode];
+    if (!s) { hardReset(); return; }
+    jobs = s.jobs;
+    processing = s.processing;
+    useFallback = s.useFallback;
+    queueList.innerHTML = s.queueHtml;
+    queueEl.style.display = s.queueDisplay;
+    queueCount.textContent = s.queueCountText;
+    resultsGrid.innerHTML = s.resultsHtml;
+    resultsArea.style.display = s.resultsDisplay;
+    statsSummary.style.display = s.statsDisplay;
+    summaryText.innerHTML = s.statsHtml;
+    globalActions.style.display = s.actionsDisplay;
+    progressWrap.style.display = s.progressDisplay;
+    errorEl.style.display = s.errorDisplay;
+    errorEl.textContent = s.errorText;
+    // TikTok state
+    tiktokResult.style.display = s.tiktokResultDisplay;
+    ttUrl.value = s.tiktokUrl || '';
+    ttCover.src = s.ttCoverSrc || '';
+    ttCover.style.display = s.ttCoverDisplay || 'none';
+    ttAuthor.textContent = s.ttAuthorText || '';
+    ttTitle.textContent = s.ttTitleText || '';
+    ttStats.innerHTML = s.ttStatsHtml || '';
+    ttMusic.textContent = s.ttMusicText || '';
+    ttMusic.style.display = s.ttMusicDisplay || 'none';
+    ttDownloads.innerHTML = s.ttDownloadsHtml || '';
+    
+    rebindResultButtons();
+  }
+
+  function hardReset() {
+    jobs=[];processing=false;stopSpin();
+    queueEl.style.display='none';progressWrap.style.display='none';fallbackInfo.style.display='none';
+    resultsArea.style.display='none';statsSummary.style.display='none';
+    globalActions.style.display='none';errorEl.style.display='none';
+    progressFill.style.width='0%';
+    queueList.innerHTML='';resultsGrid.innerHTML='';
+    tiktokResult.style.display='none';
+    ttUrl.value='';
+    ttCover.src='';
+    ttCover.style.display='none';
+    ttAuthor.textContent='';
+    ttTitle.textContent='';
+    ttStats.innerHTML='';
+    ttMusic.textContent='';
+    ttMusic.style.display='none';
+    ttDownloads.innerHTML='';
+    if(currentMode !== 'tiktok') dropZone.style.display='block';
+  }
+
+  function rebindResultButtons() {
+    var dlBtns=resultsGrid.querySelectorAll('.dl-single');
+    for(var d=0;d<dlBtns.length;d++){
+      dlBtns[d].addEventListener('click',function(){
+        var idx=parseInt(this.getAttribute('data-idx'));
+        var ext = currentMode === 'hd' ? '-hd.jpg' : '-nobg.png';
+        downloadBlob(jobs[idx].resultBlob,jobs[idx].file.name.replace(/\.[^.]+$/,'')+ext);
+      });
+    }
+    var pBtns=resultsGrid.querySelectorAll('.preview-single');
+    for(var p=0;p<pBtns.length;p++){
+      pBtns[p].addEventListener('click',function(){
+        var idx=parseInt(this.getAttribute('data-idx'));
+        showPreviewPopup(idx);
+      });
+    }
+  }
 
   /* ── ASCII box animation ── */
   var asciiBox = document.getElementById('asciiBox');
@@ -99,10 +201,16 @@ env.backends.onnx.wasm.numThreads = 1;
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       
+      var newMode = this.getAttribute('data-mode');
+      if (newMode === currentMode) return;
+      
+      // save current mode state
+      saveCurrentState();
+      
       modeSwitches.forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       
-      currentMode = this.getAttribute('data-mode');
+      currentMode = newMode;
       promptCmd.textContent = 'ruby-tools --' + currentMode;
       hideAllInputs();
       
@@ -112,7 +220,7 @@ env.backends.onnx.wasm.numThreads = 1;
         dropZone.style.display = 'block';
         dropZone.style.pointerEvents = 'auto';
         dropZone.style.opacity = '1';
-        document.querySelector('.gz-label').innerHTML = 'drag images here or <span>browse</span>';
+        document.querySelector('.gz-label').innerHTML = '↕ drag images here or <span>browse</span>';
         document.querySelector('.gz-hint').style.display = 'block';
         termOutput.innerHTML = defaultTermOutput;
       } else if (currentMode === 'hd') {
@@ -121,21 +229,21 @@ env.backends.onnx.wasm.numThreads = 1;
         dropZone.style.display = 'block';
         dropZone.style.pointerEvents = 'none';
         dropZone.style.opacity = '0.4';
-        document.querySelector('.gz-label').innerHTML = 'HD mode is currently <span style="color:var(--error)">coming soon</span>';
+        document.querySelector('.gz-label').innerHTML = '◈ HD mode is currently <span style="color:var(--error)">coming soon</span>';
         document.querySelector('.gz-hint').style.display = 'none';
         termOutput.innerHTML = defaultTermOutput;
       } else if (currentMode === 'tiktok') {
         asciiBox.textContent = '┌─────────────────────────┐\n│                         │\n│   ╭───────────────╮     │\n│   │ tiktok-dl 1.0 │     │\n│   │ no watermark  │     │\n│   │               │     │\n│   │ usage: paste  │     │\n│   │ format: mp4   │     │\n│   │               │     │\n│   │ + audio       │     │\n│   ╰───────────────╯     │\n│                         │\n└─────────────────────────┘';
         animateAsciiBox();
         tiktokInput.style.display = 'block';
-        ttUrl.value = '';
         document.getElementById('termOutput').innerHTML =
-          '<span class="dim">$</span> <span class="flag">paste</span> tiktok url below<br>' +
-          '<span class="dim">$</span> <span class="flag">video</span> downloaded without watermark<br>' +
-          '<span class="dim">$</span> <span class="flag">audio</span> extracted separately';
+          '<span class="dim">$</span> <span class="flag">⌘ paste</span> tiktok url below<br>' +
+          '<span class="dim">$</span> <span class="flag">▶ video</span> downloaded without watermark<br>' +
+          '<span class="dim">$</span> <span class="flag">♫ audio</span> extracted separately';
       }
       
-      resetBtn.click();
+      // restore saved state for this mode, or clean slate
+      restoreState(currentMode);
       
       if (hamburger.classList.contains('active')) {
         hamburger.classList.remove('active');
@@ -165,7 +273,7 @@ env.backends.onnx.wasm.numThreads = 1;
     startSpin(document.querySelector('.spinner'));
     setProgress(30, 'fetching tiktok data...');
     ttGoBtn.disabled = true;
-    ttGoBtn.textContent = 'loading...';
+    ttGoBtn.textContent = '⌛ loading...';
 
     var apiUrl = window.location.hostname.includes('vercel.app') ? '/api/tiktok.js' : '/api/tiktok';
 
@@ -199,7 +307,7 @@ env.backends.onnx.wasm.numThreads = 1;
         '<span>♥ ' + formatNum(r.stats.likes) + '</span>' +
         '<span>💬 ' + formatNum(r.stats.comments) + '</span>' +
         '<span>↗ ' + formatNum(r.stats.shares) + '</span>';
-      ttMusic.textContent = r.music_title ? '♪ ' + r.music_title : '';
+      ttMusic.textContent = r.music_title ? '♫ ' + r.music_title : '';
       ttMusic.style.display = r.music_title ? 'block' : 'none';
 
       // Build download links
@@ -212,16 +320,17 @@ env.backends.onnx.wasm.numThreads = 1;
         item.className = 'tt-dl-item';
 
         var labelMap = {
-          'nowatermark': 'Video (No Watermark)',
-          'nowatermark_hd': 'Video HD (No Watermark)',
-          'watermark': 'Video (With Watermark)',
-          'photo': 'Photo ' + (i + 1),
+          'nowatermark': '◈ Video (No Watermark)',
+          'nowatermark_hd': '◆ Video HD (No Watermark)',
+          'photo': '▣ Photo ' + (i + 1),
         };
 
+        var isHd = m.type === 'nowatermark_hd';
         item.innerHTML =
-          '<div><span class="tt-dl-type">' + escHtml(m.type) + '</span> ' +
-          '<span class="tt-dl-label">' + (labelMap[m.type] || m.type) + '</span></div>' +
-          '<a href="' + proxyBase + encodeURIComponent(m.url) + '" target="_blank" class="term-btn primary" download>⬇ download</a>';
+          '<div><span class="tt-dl-type">⬡ ' + escHtml(m.type) + '</span> ' +
+          '<span class="tt-dl-label">' + (labelMap[m.type] || m.type) + (isHd ? ' <span class="tt-rec">★ recommended</span>' : '') + '</span></div>' +
+          '<a href="' + proxyBase + encodeURIComponent(m.url) + '" target="_blank" class="term-btn ' + (isHd ? 'primary tt-dl-hd' : 'primary') + '" download>⬇ save</a>';
+        if (isHd) item.classList.add('tt-dl-highlight');
         ttDownloads.appendChild(item);
       }
 
@@ -230,9 +339,9 @@ env.backends.onnx.wasm.numThreads = 1;
         var audioItem = document.createElement('div');
         audioItem.className = 'tt-dl-item';
         audioItem.innerHTML =
-          '<div><span class="tt-dl-type">audio</span> ' +
+          '<div><span class="tt-dl-type">♫ audio</span> ' +
           '<span class="tt-dl-label">♪ ' + escHtml(r.music_title || 'Original Sound') + '</span></div>' +
-          '<a href="' + proxyBase + encodeURIComponent(r.music) + '" target="_blank" class="term-btn primary" download>⬇ download</a>';
+          '<a href="' + proxyBase + encodeURIComponent(r.music) + '" target="_blank" class="term-btn primary" download>⬇ save</a>';
         ttDownloads.appendChild(audioItem);
       }
 
@@ -244,7 +353,7 @@ env.backends.onnx.wasm.numThreads = 1;
       stopSpin();
       progressWrap.style.display = 'none';
       ttGoBtn.disabled = false;
-      ttGoBtn.textContent = '⬇ download';
+      ttGoBtn.textContent = '⬇ fetch';
     }
   }
 
@@ -310,8 +419,8 @@ env.backends.onnx.wasm.numThreads = 1;
 
       var status=document.createElement('div');
       status.className='file-status '+j.status;
-      if(j.status==='pending')status.textContent='queued';
-      else if(j.status==='processing')status.textContent='processing...';
+      if(j.status==='pending')status.textContent='○ queued';
+      else if(j.status==='processing')status.textContent='⟳ processing...';
       else if(j.status==='done')status.textContent='✓ done ('+j.duration+'s)';
       else status.textContent='✗ '+j.error;
 
@@ -321,41 +430,50 @@ env.backends.onnx.wasm.numThreads = 1;
   }
 
   /* ── Process queue ── */
-  async function processQueue(){
+  async function processQueue(mode){
+    if (!mode) mode = currentMode;
+    processingMode = mode;
+    
+    // If user switched away, jobs might refer to the new mode. We need the target mode's jobs.
+    var targetJobs = (mode === currentMode) ? jobs : (modeState[mode] ? modeState[mode].jobs : []);
+    
     var next=-1;
-    for(var i=0;i<jobs.length;i++){if(jobs[i].status==='pending'){next=i;break}}
-    if(next===-1){finishAll();return}
+    for(var i=0;i<targetJobs.length;i++){if(targetJobs[i].status==='pending'){next=i;break}}
+    if(next===-1){finishAll(mode);return}
 
-    processing=true;
-    var job=jobs[next];
+    if (mode === currentMode) processing=true;
+    else if (modeState[mode]) modeState[mode].processing = true;
+    
+    var job=targetJobs[next];
     job.status='processing';
-    renderQueue();
+    if (mode === currentMode) renderQueue();
 
-    var done=0,total=jobs.length;
-    for(var k=0;k<jobs.length;k++){if(jobs[k].status==='done'||jobs[k].status==='error')done++}
+    var done=0,total=targetJobs.length;
+    for(var k=0;k<targetJobs.length;k++){if(targetJobs[k].status==='done'||targetJobs[k].status==='error')done++}
 
-    progressWrap.style.display='block';
-    startSpin(document.querySelector('.spinner'));
-    var globalPct=Math.round((done/total)*100);
-    setProgress(globalPct,'processing '+(done+1)+'/'+total+': '+job.file.name);
-
-    if (useFallback) fallbackInfo.style.display = 'block';
+    if (mode === currentMode) {
+      progressWrap.style.display='block';
+      startSpin(document.querySelector('.spinner'));
+      var globalPct=Math.round((done/total)*100);
+      setProgress(globalPct,'processing '+(done+1)+'/'+total+': '+job.file.name);
+      if (useFallback) fallbackInfo.style.display = 'block';
+    }
 
     var t0=Date.now();
 
     try {
-      if (currentMode === 'rmbg' && useFallback) {
-        await runLocalFallback(job, t0);
+      if (mode === 'rmbg' && ((mode === currentMode && useFallback) || (mode !== currentMode && modeState[mode] && modeState[mode].useFallback))) {
+        await runLocalFallback(job, t0, mode);
       } else {
         var form=new FormData();
         var proxyUrl = '';
         
-        if (currentMode === 'rmbg') {
+        if (mode === 'rmbg') {
           form.append('image',job.file,job.file.name);
           form.append('format','png');
           form.append('model','v1');
           proxyUrl = window.location.hostname.includes('vercel.app') ? '/api/removebg.js' : '/api/removebg';
-        } else if (currentMode === 'hd') {
+        } else if (mode === 'hd') {
           form.append('image',job.file,job.file.name);
           proxyUrl = window.location.hostname.includes('vercel.app') ? '/api/enhance.js' : '/api/enhance';
         }
@@ -372,12 +490,17 @@ env.backends.onnx.wasm.numThreads = 1;
         job.duration=((Date.now()-t0)/1000).toFixed(1);
       }
     } catch(e) {
-      if (currentMode === 'rmbg' && !useFallback) {
+      var isFallback = (mode === currentMode) ? useFallback : (modeState[mode] ? modeState[mode].useFallback : false);
+      if (mode === 'rmbg' && !isFallback) {
         console.log('RMBG API failed, switching to local fallback mode...', e);
-        useFallback = true;
-        fallbackInfo.style.display = 'block';
+        if (mode === currentMode) {
+          useFallback = true;
+          fallbackInfo.style.display = 'block';
+        } else if (modeState[mode]) {
+          modeState[mode].useFallback = true;
+        }
         try {
-          await runLocalFallback(job, t0);
+          await runLocalFallback(job, t0, mode);
         } catch(fallbackErr) {
           job.status='error';
           job.error='fallback failed: ' + fallbackErr.message;
@@ -387,13 +510,13 @@ env.backends.onnx.wasm.numThreads = 1;
         job.error=e.message;
       }
     } finally {
-      renderQueue();
-      processQueue();
+      if (mode === currentMode) renderQueue();
+      processQueue(mode);
     }
   }
 
-  async function runLocalFallback(job, t0) {
-    setProgress(10, 'loading ai model (once)...');
+  async function runLocalFallback(job, t0, mode) {
+    if (mode === currentMode) setProgress(10, 'loading ai model (once)...');
     
     if (!fallbackPipeline) {
       fallbackPipeline = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
@@ -456,52 +579,55 @@ env.backends.onnx.wasm.numThreads = 1;
   }
 
   /* ── Finish all ── */
-  function finishAll(){
-    processing=false;
-    stopSpin();
-    progressWrap.style.display='none';
+  function finishAll(mode){
+    if (mode === currentMode) {
+      processing=false;
+      stopSpin();
+      progressWrap.style.display='none';
+    } else if (modeState[mode]) {
+      modeState[mode].processing = false;
+      modeState[mode].progressDisplay = 'none';
+    }
 
+    var targetJobs = (mode === currentMode) ? jobs : (modeState[mode] ? modeState[mode].jobs : []);
     var okCount=0,errCount=0,totalTime=0,totalSize=0;
-    for(var i=0;i<jobs.length;i++){
-      if(jobs[i].status==='done'){okCount++;totalTime+=parseFloat(jobs[i].duration);totalSize+=jobs[i].resultBlob.size}
-      if(jobs[i].status==='error')errCount++;
+    for(var i=0;i<targetJobs.length;i++){
+      if(targetJobs[i].status==='done'){okCount++;totalTime+=parseFloat(targetJobs[i].duration);totalSize+=targetJobs[i].resultBlob.size}
+      if(targetJobs[i].status==='error')errCount++;
     }
 
     // render results
-    resultsGrid.innerHTML='';
-    for(var j=0;j<jobs.length;j++){
-      if(jobs[j].status!=='done')continue;
+    var tempGrid = document.createElement('div');
+    for(var j=0;j<targetJobs.length;j++){
+      if(targetJobs[j].status!=='done')continue;
       var card=document.createElement('div');
       card.className='result-card';
       card.innerHTML=
-        '<div class="card-title"><span>'+escHtml(jobs[j].file.name)+'</span><span class="card-meta">'+jobs[j].duration+'s │ '+formatSize(jobs[j].resultBlob.size)+'</span></div>'+
+        '<div class="card-title"><span>'+escHtml(targetJobs[j].file.name)+'</span><span class="card-meta">'+targetJobs[j].duration+'s │ '+formatSize(targetJobs[j].resultBlob.size)+'</span></div>'+
         '<div class="img-compare">'+
-          '<div><div class="img-side orig"><img src="'+jobs[j].origUrl+'"></div><div class="img-side-label">original</div></div>'+
-          '<div><div class="img-side result"><img src="'+jobs[j].resultUrl+'"></div><div class="img-side-label">result</div></div>'+
+          '<div><div class="img-side orig"><img src="'+targetJobs[j].origUrl+'"></div><div class="img-side-label">original</div></div>'+
+          '<div><div class="img-side result"><img src="'+targetJobs[j].resultUrl+'"></div><div class="img-side-label">result</div></div>'+
         '</div>'+
         '<div class="card-actions">'+
-          '<button class="term-btn primary dl-single" data-idx="'+j+'">⬇ download</button>'+
-          '<button class="term-btn preview-single" data-idx="'+j+'">👁 preview</button>'+
+          '<button class="term-btn primary dl-single" data-idx="'+j+'">⬇ save</button>'+
+          '<button class="term-btn preview-single" data-idx="'+j+'">◎ preview</button>'+
         '</div>';
-      resultsGrid.appendChild(card);
+      tempGrid.appendChild(card);
+    }
+    
+    var finalGridHtml = tempGrid.innerHTML;
+
+    if (mode === currentMode) {
+      resultsGrid.innerHTML = finalGridHtml;
+      rebindResultButtons();
+    } else if (modeState[mode]) {
+      modeState[mode].resultsHtml = finalGridHtml;
     }
 
-    // bind single downloads
-    var dlBtns=resultsGrid.querySelectorAll('.dl-single');
-    for(var d=0;d<dlBtns.length;d++){
-      dlBtns[d].addEventListener('click',function(){
-        var idx=parseInt(this.getAttribute('data-idx'));
-        var ext = currentMode === 'hd' ? '-hd.jpg' : '-nobg.png';
-        downloadBlob(jobs[idx].resultBlob,jobs[idx].file.name.replace(/\.[^.]+$/,'')+ext);
-      });
-    }
-
-    // bind previews
-    var pBtns=resultsGrid.querySelectorAll('.preview-single');
-    for(var p=0;p<pBtns.length;p++){
-      pBtns[p].addEventListener('click',function(){
-        var idx=parseInt(this.getAttribute('data-idx'));
-        var popup=document.createElement('div');
+  function showPreviewPopup(idx) {
+    var job = jobs[idx];
+    if (!job) return;
+    var popup=document.createElement('div');
         popup.style.position='fixed';
         popup.style.top='0';popup.style.left='0';popup.style.right='0';popup.style.bottom='0';
         popup.style.backgroundColor='rgba(0,0,0,0.9)';
@@ -578,8 +704,7 @@ env.backends.onnx.wasm.numThreads = 1;
         
         document.body.appendChild(popup);
         popup.addEventListener('click',function(){popup.remove()});
-      });
-    }
+  }
 
     // summary
     var summaryParts=[
@@ -588,12 +713,21 @@ env.backends.onnx.wasm.numThreads = 1;
     if(errCount>0)summaryParts.push('<span style="color:var(--error)">✗ '+errCount+' failed</span>');
     summaryParts.push('<span class="val">'+totalTime.toFixed(1)+'s total</span>');
     summaryParts.push('<span class="val">'+formatSize(totalSize)+'</span>');
-    summaryText.innerHTML=summaryParts.join('<span class="sep">│</span>');
+    var finalSummaryHtml = summaryParts.join('<span class="sep">│</span>');
 
-    resultsArea.style.display='block';
-    statsSummary.style.display='block';
-    globalActions.style.display='flex';
-    if(okCount<2)downloadAllBtn.style.display='none';
+    if (mode === currentMode) {
+      summaryText.innerHTML = finalSummaryHtml;
+      resultsArea.style.display='block';
+      statsSummary.style.display='block';
+      globalActions.style.display='flex';
+      if(okCount<2)downloadAllBtn.style.display='none';
+      else downloadAllBtn.style.display='inline-block';
+    } else if (modeState[mode]) {
+      modeState[mode].statsHtml = finalSummaryHtml;
+      modeState[mode].resultsDisplay = 'block';
+      modeState[mode].statsDisplay = 'block';
+      modeState[mode].actionsDisplay = 'flex';
+    }
   }
 
   /* ── Global actions ── */
@@ -607,14 +741,33 @@ env.backends.onnx.wasm.numThreads = 1;
   });
 
   resetBtn.addEventListener('click',function(){
-    jobs=[];processing=false;stopSpin();
-    queueEl.style.display='none';progressWrap.style.display='none';fallbackInfo.style.display='none';
-    resultsArea.style.display='none';statsSummary.style.display='none';
-    globalActions.style.display='none';errorEl.style.display='none';
-    if(currentMode !== 'tiktok') dropZone.style.display='block';
-    progressFill.style.width='0%';
-    queueList.innerHTML='';resultsGrid.innerHTML='';
-    tiktokResult.style.display='none';
+    if (currentMode === 'tiktok') {
+      ttUrl.value = '';
+      tiktokResult.style.display = 'none';
+      errorEl.style.display = 'none';
+      ttCover.src='';
+      ttCover.style.display='none';
+      ttAuthor.textContent='';
+      ttTitle.textContent='';
+      ttStats.innerHTML='';
+      ttMusic.textContent='';
+      ttMusic.style.display='none';
+      ttDownloads.innerHTML='';
+    } else {
+      jobs=[];
+      processing=false;
+      stopSpin();
+      queueEl.style.display='none';
+      progressWrap.style.display='none';
+      fallbackInfo.style.display='none';
+      resultsArea.style.display='none';
+      statsSummary.style.display='none';
+      globalActions.style.display='none';
+      errorEl.style.display='none';
+      progressFill.style.width='0%';
+      queueList.innerHTML='';
+      resultsGrid.innerHTML='';
+    }
   });
 
   /* ── Helpers ── */
@@ -624,7 +777,7 @@ env.backends.onnx.wasm.numThreads = 1;
     progressText.textContent=text;
   }
 
-  function showError(msg){errorEl.textContent='error: '+msg;errorEl.style.display='block'}
+  function showError(msg){errorEl.textContent='✗ error: '+msg;errorEl.style.display='block'}
 
   function formatSize(b){
     if(b<1024)return b+' B';
